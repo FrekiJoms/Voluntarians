@@ -144,28 +144,31 @@
 
       <!-- Header -->
       <div class="header" role="banner">
-        <div class="brand" role="img" aria-label="Voluntarians">
-          <div class="logo-area"><img src="file:///C:/Users/Boss/Documents/AILA%20INTERFACE/ICT%20PIN%20LOGO/COPY%20PNG.png" alt="" style="width:40px;height:40px;border-radius:8px"></div>
-          <div>
-            <div class="title">VOLUNTARIANS</div>
-            <div class="subtitle">Ver-2.1</div>
-          </div>
-        </div>
+  <div class="brand" role="img" aria-label="Voluntarians Hub">
+    <div class="logo-area">
+      <img src="file:///C:/Users/Boss/Documents/AILA%20INTERFACE/ICT%20PIN%20LOGO/COPY%20PNG.png" 
+           alt="Voluntarians Logo" 
+           style="width:40px;height:40px;border-radius:8px">
+    </div>
+    <div>
+      <div class="title">VOLUNTARIANS HUB</div>
+      <div class="subtitle">Community Platform v2.1</div>
+    </div>
+  </div>
 
-        <div class="nav-buttons" role="navigation" aria-label="Main navigation">
-          <button class="nav-btn active" data-target="submit" onclick="handleNav(event)">Submit Concern</button>
-          <button class="nav-btn" data-target="recommended" onclick="handleNav(event)">Messages</button>
-          <button class="nav-btn" data-target="ideas" onclick="handleNav(event)">Ideas</button>
-          <button class="nav-btn" data-target="dashboardPage" onclick="handleNav(event)">Analytics</button>
-        </div>
-      </div>
-
+  <div class="nav-buttons" role="navigation" aria-label="Main navigation">
+    <button class="nav-btn active" data-target="submit" onclick="handleNav(event)" aria-label="Report an Issue">Report Issue</button>
+    <button class="nav-btn" data-target="recommended" onclick="handleNav(event)" aria-label="View Messages">Messages</button>
+    <button class="nav-btn" data-target="ideas" onclick="handleNav(event)" aria-label="Explore Ideas">Ideas</button>
+    <button class="nav-btn" data-target="dashboardPage" onclick="handleNav(event)" aria-label="View Analytics">Analytics</button>
+  </div>
+</div>
       <!-- Main -->
       <div class="main" role="main">
         <!-- Submit -->
         <section id="submit" class="section active">
           <div class="content-wrap">
-            <h1>Report Concern</h1>
+            <h1>Report an Issue or Ideas</h1>
             <textarea id="concern-text" aria-label="Your concern" placeholder="Write your concern here..."></textarea>
             <div class="row" style="margin-top:12px;">
               <button id="submitBtn" class="btn" onclick="submitConcern()">Submit</button>
