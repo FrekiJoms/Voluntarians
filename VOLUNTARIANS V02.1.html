@@ -136,7 +136,7 @@
         <div style="width:140px;height:140px;border-radius:20px;background:linear-gradient(135deg,var(--accent1),var(--accent2));display:flex;align-items:center;justify-content:center;box-shadow:0 12px 40px rgba(0,210,255,0.12)">
           <img src="file:///C:/Users/Boss/Documents/AILA%20INTERFACE/ICT%20PIN%20LOGO/COPY%20PNG.png" alt="Voluntarians Logo" style="width:110px;height:110px;border-radius:12px;"/>
         </div>
-        <h1 style="margin:0;font-size:24px;font-weight:800">VOLUNTARIANS</h1>
+        <h1 style="margin:0;font-size:24px;font-weight:800">VOLUNTARIANS HUB</h1>
         <p style="max-width:520px;margin:0;color:var(--muted)">A hub that connects problems to solutions.<break>The rise of an era of Volunteers, <strong>the Voluntarians.</strong></break></p>
         <button id="startBtn" style="margin-top:6px;padding:12px 26px;border-radius:12px;border:none;font-weight:800;background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#001;cursor:pointer;box-shadow:0 10px 30px rgba(0,210,255,0.06)">Start</button>
         <div class="muted" style="margin-top:6px">Submit concerns • Generate project ideas • Improve training productivity</div>
@@ -154,9 +154,9 @@
 
         <div class="nav-buttons" role="navigation" aria-label="Main navigation">
           <button class="nav-btn active" data-target="submit" onclick="handleNav(event)">Submit Concern</button>
-          <button class="nav-btn" data-target="recommended" onclick="handleNav(event)">Recommended</button>
-          <button class="nav-btn" data-target="ideas" onclick="handleNav(event)">Project Ideas</button>
-          <button class="nav-btn" data-target="dashboardPage" onclick="handleNav(event)">Dashboard</button>
+          <button class="nav-btn" data-target="recommended" onclick="handleNav(event)">Messages</button>
+          <button class="nav-btn" data-target="ideas" onclick="handleNav(event)">Ideas</button>
+          <button class="nav-btn" data-target="dashboardPage" onclick="handleNav(event)">Analytics</button>
         </div>
       </div>
 
@@ -165,7 +165,7 @@
         <!-- Submit -->
         <section id="submit" class="section active">
           <div class="content-wrap">
-            <h1>Submit Concern</h1>
+            <h1>Report Concern</h1>
             <textarea id="concern-text" aria-label="Your concern" placeholder="Write your concern here..."></textarea>
             <div class="row" style="margin-top:12px;">
               <button id="submitBtn" class="btn" onclick="submitConcern()">Submit</button>
@@ -213,7 +213,7 @@
         <!-- Ideas -->
         <section id="ideas" class="section">
           <div class="content-wrap">
-            <h2>Suggestions</h2>
+            <h2>ideas</h2>
             <p class="muted">Choose a category to see suggested projects</p>
             <select id="main-category" onchange="updateSubcategories()" aria-label="Main category">
               <option value="">Choose Main Category</option>
