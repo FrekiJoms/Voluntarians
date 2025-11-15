@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>VOLUNTARIANS</title>
+<style>
+
+  /* Reset & base */
+  *, *::before, *::after { box-sizing: border-box; }
+  html,body { height:100%; margin:0; }
+  html, body {
+    -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+    background: linear-gradient(120deg,#041428,#07263a,#03304a);
+    background-size: 300% 300%; animation: grad 14s ease infinite; color:#e8fbff;
+  }
+  @keyframes grad{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+
+  /* Prevent horizontal scroll */
+  html, body { overflow-x: hidden; }
+
+  /* Theme variables */
+  :root{
+    --muted:#9fb6c6; --accent1:#00d1ff; --accent2:#1dd3c9;
+    --glass: rgba(255,255,255,0.03); --glass-2: rgba(255,255,255,0.02);
+    --card: rgba(6,14,20,0.75);
+    --max-width:1200px;
+  }
+
+  /* App container */
+  .app { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:28px; }
+  .container {
+    width:100%; max-width:var(--max-width); min-height:78vh;
+    background: linear-gradient(180deg,var(--glass-2), rgba(255,255,255,0.04));
+    border-radius:14px; box-shadow:0 20px 60px rgba(2,8,20,0.75); border:1px solid rgba(255,255,255,0.03);
+    display:flex; flex-direction:column; overflow:hidden;
+  }
+
+  /* Header */
+  .header { display:flex; align-items:center; justify-content:space-between; padding:14px 20px; border-bottom:1px solid rgba(255,255,255,0.04); backdrop-filter: blur(6px); z-index:2; }
+  .brand { display:flex; gap:14px; align-items:center; }
+  .logo-area { width:56px; height:56px; border-radius:12px; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,var(--accent1),var(--accent2)); box-shadow:0 10px 30px rgba(0,210,255,0.06); }
+  .title{font-weight:700;font-size:15px;color:#e8fbff}
+  .subtitle{font-size:12px;color:var(--muted)}
+  .nav-buttons{display:flex; gap:10px; flex-wrap:wrap}
+  .nav-btn { background:transparent; color:var(--accent1); border:1px solid rgba(0,209,255,0.12); padding:8px 14px;border-radius:8px; cursor:pointer; transition:all .18s; font-size:14px }
+  .nav-btn.active, .nav-btn:hover { background:linear-gradient(90deg,var(--accent1),var(--accent2)); color:#002; box-shadow:0 6px 18px rgba(0,210,255,0.08) }
+
+  /* Main area */
+  .main { display:flex; flex-direction:column; gap:18px; padding:22px; overflow:auto; min-height:calc(78vh - 80px); }
+  .section { display:none; opacity:0; transition:opacity .28s ease, transform .28s ease; padding:8px 6px; }
+  .section.active { display:block; opacity:1; transform: none; }
+
+  /* Content width control */
+  .content-wrap { width:100%; max-width:980px; margin:0 auto; }
+
+  /* Submit */
+  textarea { width:100%; min-height:150px; background:#0f1a20; color:#e8fbff; border:1px solid rgba(0,210,255,0.12); border-radius:12px; padding:14px; font-size:14px; resize:vertical; box-shadow: inset 0 0 8px rgba(0,0,0,0.35); outline: none; }
+  textarea:focus { box-shadow: 0 8px 30px rgba(0,210,255,0.06); border-color: rgba(0,210,255,0.28); }
+  .row { display:flex; gap:12px; align-items:center; margin-top:12px; flex-wrap:wrap; }
+  .btn { background:linear-gradient(90deg,var(--accent1),var(--accent2)); color:#001; border:none; padding:10px 18px; border-radius:12px; cursor:pointer; font-weight:700 }
+  .btn.ghost { background:transparent; color:var(--accent1); border:1px solid rgba(0,210,255,0.06) }
+  
+  /* FIXED: Response box styling with success and error states */
+  .response { 
+    margin-top:14px; padding:14px; 
+    background:var(--card); 
+    border-radius:12px; 
+    box-shadow:0 6px 20px rgba(0,210,255,0.03); 
+    word-break:break-word;
+    border-left: 4px solid var(--accent1);
+  }
+  .response.error {
+    border-left-color: #ff4444;
+    background: rgba(40,10,10,0.75);
+  }
+  .response.success {
+    border-left-color: #00ff88;
+    background: rgba(6,20,14,0.75);
+  }
+  
+  .muted { color:var(--muted); font-size:13px }
+
+  /* Recommended */
+  .controls{ display:flex; gap:10px; margin-bottom:16px; align-items:center; flex-wrap:wrap }
+  .search { padding:8px 10px; background:#0f1a20; border-radius:10px; border:1px solid rgba(0,210,255,0.06); color:#e8fbff; min-width:200px; }
+  .card { background:rgba(10,18,22,0.72); border:1px solid rgba(0,210,255,0.06); border-radius:12px; padding:12px; margin-bottom:12px; box-shadow:0 8px 28px rgba(0,210,255,0.02); }
+  .card .meta { color:var(--muted); font-size:13px; margin-bottom:8px }
+  .projects { margin-top:8px; display:flex; gap:8px; flex-wrap:wrap }
+  .pill { padding:6px 10px; border-radius:999px; background:rgba(255,255,255,0.02); border:1px solid rgba(0,210,255,0.06); font-size:13px; cursor:pointer }
+
+  /* Ideas generator */
+  select { width:100%; padding:10px; border-radius:10px; border:1px solid rgba(0,210,255,0.06); background:#0f1a20; color:#e8fbff; margin-bottom:10px }
+
+  /* Spinner */
+  .spinner { width:18px; height:18px; border-radius:50%; border:3px solid rgba(255,255,255,0.08); border-top-color:var(--accent1); animation:spin .9s linear infinite; display:inline-block; vertical-align:middle }
+  @keyframes spin{ to { transform:rotate(360deg) } }
+
+  /* MODAL - frosted glass popup */
+  .modal-backdrop {
+    position: fixed; inset: 0; width:100%; height:100%; display:none;
+    background: rgba(0,0,0,0.55); backdrop-filter: blur(8px); z-index:2500;
+    align-items:center; justify-content:center; padding:22px; 
+  }
+  .modal-backdrop.active { display:flex; }
+
+  .modal-window {
+    width:100%; max-width:980px; max-height:88vh; border-radius:14px; padding:18px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    box-shadow: 0 30px 80px rgba(0,0,0,0.6), 0 2px 12px rgba(0,210,255,0.04);
+    border: 1px solid rgba(255,255,255,0.04);
+    transform: translateY(8px) scale(.96); opacity:0; transition: transform .28s cubic-bezier(.2,.9,.22,1), opacity .22s ease;
+    display:flex; flex-direction:column;
+  }
+  .modal-backdrop.active .modal-window { transform: translateY(0) scale(1); opacity:1; }
+
+  .modal-header { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px; }
+  .modal-header h3 { margin:0; font-size:18px; }
+  .modal-body { overflow:auto; padding-right:6px; }
+
+  /* small screens */
+  @media (max-width:900px) {
+    .container { border-radius:10px; }
+    .main { padding:16px; }
+    .modal-window { padding:14px; max-width: 96%; max-height:92vh; }
+  }
+</style>
+</head>
+<body>
+  <div class="app">
+    <div class="container" id="appContainer" aria-live="polite">
+
+      <!-- HOME / START SCREEN -->
+      <div id="homeScreen" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:28px;text-align:center;z-index:2200;background:rgba(0,0,0,0.44);backdrop-filter: blur(14px);">
+        <div style="width:140px;height:140px;border-radius:20px;background:linear-gradient(135deg,var(--accent1),var(--accent2));display:flex;align-items:center;justify-content:center;box-shadow:0 12px 40px rgba(0,210,255,0.12)">
+          <img src="file:///C:/Users/Boss/Documents/AILA%20INTERFACE/ICT%20PIN%20LOGO/COPY%20PNG.png" alt="Voluntarians Logo" style="width:110px;height:110px;border-radius:12px;"/>
+        </div>
+        <h1 style="margin:0;font-size:24px;font-weight:800">VOLUNTARIANS</h1>
+        <p style="max-width:520px;margin:0;color:var(--muted)">A hub that connects problems to solutions.<break>The rise of an era of Volunteers, <strong>the Voluntarians.</strong></break></p>
+        <button id="startBtn" style="margin-top:6px;padding:12px 26px;border-radius:12px;border:none;font-weight:800;background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#001;cursor:pointer;box-shadow:0 10px 30px rgba(0,210,255,0.06)">Start</button>
+        <div class="muted" style="margin-top:6px">Submit concerns • Generate project ideas • Improve training productivity</div>
+      </div>
+
+      <!-- Header -->
+      <div class="header" role="banner">
+        <div class="brand" role="img" aria-label="Voluntarians">
+          <div class="logo-area"><img src="file:///C:/Users/Boss/Documents/AILA%20INTERFACE/ICT%20PIN%20LOGO/COPY%20PNG.png" alt="" style="width:40px;height:40px;border-radius:8px"></div>
+          <div>
+            <div class="title">VOLUNTARIANS</div>
+            <div class="subtitle">Ver-2.1</div>
+          </div>
+        </div>
+
+        <div class="nav-buttons" role="navigation" aria-label="Main navigation">
+          <button class="nav-btn active" data-target="submit" onclick="handleNav(event)">Submit Concern</button>
+          <button class="nav-btn" data-target="recommended" onclick="handleNav(event)">Recommended</button>
+          <button class="nav-btn" data-target="ideas" onclick="handleNav(event)">Project Ideas</button>
+          <button class="nav-btn" data-target="dashboardPage" onclick="handleNav(event)">Dashboard</button>
+        </div>
+      </div>
+
+      <!-- Main -->
+      <div class="main" role="main">
+        <!-- Submit -->
+        <section id="submit" class="section active">
+          <div class="content-wrap">
+            <h1>Submit Concern</h1>
+            <textarea id="concern-text" aria-label="Your concern" placeholder="Write your concern here..."></textarea>
+            <div class="row" style="margin-top:12px;">
+              <button id="submitBtn" class="btn" onclick="submitConcern()">Submit</button>
+              <button id="clearBtn" class="btn ghost" onclick="clearInput()">Clear</button>
+              <div id="submitLoader" style="display:none"><span class="spinner" aria-hidden="true"></span> Sending...</div>
+            </div>
+            <!-- FIXED: Response box now always exists in DOM, visibility controlled by display property -->
+            <div id="response" class="response" style="display:none" aria-live="polite"></div>
+          </div>
+        </section>
+
+        <!-- Recommended -->
+        <section id="recommended" class="section">
+          <div class="content-wrap">
+            <h2>Messages</h2>
+            <div class="controls">
+              <input id="search" class="search" placeholder="Search recommended..." oninput="filterCards()" aria-label="Search recommended">
+              <div style="display:flex; gap:8px;">
+                <button class="btn ghost" onclick="fetchRecommendations()">Refresh</button>
+              </div>
+            </div>
+            <div id="cards-container" aria-live="polite"></div>
+            <div id="recLoader" style="display:none;margin-top:10px"><span class="spinner"></span> Loading...</div>
+          </div>
+        </section>
+
+        <!-- Dashboard Page -->
+        <section id="dashboardPage" class="section">
+          <div class="content-wrap">
+            <div style="background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.008)); border-radius:12px; padding:16px; display:flex; flex-direction:column; gap:12px;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                  <div style="font-weight:800;font-size:16px">📊 Voluntarians Dashboard</div>
+                  <div class="muted" style="margin-top:6px">View analytics, activity trends, and live charts pulled from Google Sheets.</div>
+                </div>
+                <div>
+                  <button class="btn" onclick="openModal()">Open Dashboard</button>
+                </div>
+              </div>
+              <div class="muted">Tip: nandito naka lagay kung ano yung mostly requested.</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Ideas -->
+        <section id="ideas" class="section">
+          <div class="content-wrap">
+            <h2>Suggestions</h2>
+            <p class="muted">Choose a category to see suggested projects</p>
+            <select id="main-category" onchange="updateSubcategories()" aria-label="Main category">
+              <option value="">Choose Main Category</option>
+              <option value="TMF">TMF</option>
+              <option value="EXE">EXE</option>
+              <option value="Kaizenset">Kaizenset</option>
+            </select>
+            <select id="sub-category" onchange="generateIdeas()" aria-label="Subcategory">
+              <option value="">Choose Subcategory</option>
+            </select>
+            <div id="ideas-container" class="ideas" style="margin-top:14px"></div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal (frosted) -->
+  <div id="modalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true" onclick="backdropClick(event)">
+    <div class="modal-window" role="document" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3>📊 Voluntarians Dashboard</h3>
+        <div>
+          <button class="btn ghost" onclick="closeModal()">Close</button>
+        </div>
+      </div>
+      <div class="modal-body" id="modalBody">
+        <iframe id="dashboardFrame" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vTzGMwUdbf0twIVwDY1iCqoN1_v1D4T9g6D3qmiRKoAo4W9PxY51vDMUyvI2yyzfFDeG3WrxXba5hV_/pubchart?oid=1006276544&format=interactive" style="width:100%;height:100%;border:none"></iframe>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ---------- CONFIG ---------- */
+const DEPLOYED_ID = 'AKfycbzqWj68wUYgGSht2rUD8vMSsjVVOGXzxF-OHQSFPq0_Kl6oj3YfSOsFMOZkwNFD27fj-A';
+const SECRET_TOKEN = 'vtjmn027';
+
+/* ---------- UTILS ---------- */
+function qs(s){ return document.querySelector(s); }
+function qsa(s){ return Array.from(document.querySelectorAll(s)); }
+function fmtDate(src){ if(!src) return ''; const d=new Date(src); return isNaN(d)?src:d.toLocaleString(); }
+function safeText(t){ return (t===undefined||t===null)?'':String(t); }
+function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escapeForInline(s){ return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'\\"').replace(/\n/g,' '); }
+
+/* ---------- HOME START ---------- */
+const homeScreen = qs('#homeScreen'), startBtn = qs('#startBtn');
+startBtn.addEventListener('click', () => {
+  homeScreen.style.transition = "opacity .8s ease, transform .6s ease";
+  homeScreen.style.opacity = "0"; homeScreen.style.transform = "scale(1.02)";
+  setTimeout(()=> homeScreen.style.display = 'none', 550);
+  setTimeout(()=> showSection('submit'), 580);
+});
+
+/* ---------- NAV ---------- */
+function handleNav(e){
+  const btn = e.currentTarget;
+  qsa('.nav-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const target = btn.getAttribute('data-target');
+  showSection(target);
+}
+function showSection(id){
+  qsa('.section').forEach(s=>s.classList.remove('active'));
+  const el = qs('#'+id);
+  if(el) el.classList.add('active');
+  qs('.main').scrollTop = 0;
+}
+
+/* ---------- MODAL (POPUP) ---------- */
+const modalBackdrop = qs('#modalBackdrop');
+function openModal(){
+  const active = qsa('.nav-btn').find(b=>b.classList.contains('active'));
+  if(!active || active.getAttribute('data-target') !== 'dashboardPage'){
+    qsa('.nav-btn').forEach(b=>b.classList.remove('active'));
+    const dashBtn = qsa('.nav-btn').find(b => b.getAttribute('data-target') === 'dashboardPage');
+    if(dashBtn) dashBtn.classList.add('active');
+    showSection('dashboardPage');
+  }
+  modalBackdrop.classList.add('active');
+  modalBackdrop.setAttribute('aria-hidden','true');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal(){
+  modalBackdrop.classList.remove('active');
+  modalBackdrop.setAttribute('aria-hidden','true');
+  document.body.style.overflow = '';
+}
+function backdropClick(e){
+  if(e.target === modalBackdrop) closeModal();
+}
+
+/* ---------- SUBMIT CONCERN ---------- */
+const submitBtn = qs('#submitBtn'), submitLoader = qs('#submitLoader'), responseBox = qs('#response'), textarea = qs('#concern-text');
+
+async function submitConcern(){
+  const message = textarea.value.trim();
+  
+  // FIXED: Show validation error in responseBox instead of alert()
+  if(!message){ 
+    showResponse('Please enter a concern before submitting.', 'error');
+    return; 
+  }
+  
+  // Start submission process
+  submitBtn.disabled = true; 
+  submitLoader.style.display = 'inline-block'; 
+  responseBox.style.display = 'none';
+  
+  try {
+    const res = await fetch(`https://script.google.com/macros/s/${DEPLOYED_ID}/exec`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ 
+        token: SECRET_TOKEN, 
+        message: message, 
+        source: 'VOLUN', 
+        extra: '' 
+      }),
+      // FIXED: Added redirect mode to handle Google Apps Script redirects
+      redirect: 'follow'
+    });
+    
+    // FIXED: Better error handling for non-OK responses
+    if (!res.ok) {
+      throw new Error(`Server responded with status ${res.status}: ${res.statusText}`);
+    }
+    
+    const data = await res.json();
+    
+    // FIXED: Check for success flag and provide meaningful error messages
+    if(!data || data.success !== true) {
+      throw new Error(data?.error || data?.message || 'Server returned an error. Please try again.');
+    }
+    
+    // FIXED: Safely extract category data with fallbacks
+    const catMain = (data.category && data.category.main) ? data.category.main : 'Uncategorized';
+    const catSub = (data.category && data.category.sub) ? data.category.sub : 'Unknown';
+    
+    // FIXED: Handle suggestions in various formats (array, string, or missing)
+    let suggestions = [];
+    if (Array.isArray(data.suggestions)) {
+      suggestions = data.suggestions;
+    } else if (typeof data.suggestions === 'string' && data.suggestions.trim()) {
+      suggestions = data.suggestions.split('|').map(s => s.trim()).filter(Boolean);
+    }
+    
+    // Build success message with proper HTML structure
+    let html = `<div style="margin-bottom:10px"><strong style="color:#00ff88">✓ Concern Submitted Successfully!</strong></div>`;
+    html += `<div class="muted" style="margin-bottom:10px">Category: <strong>${escapeHtml(catMain)}</strong> › <strong>${escapeHtml(catSub)}</strong></div>`;
+    
+    if(suggestions.length > 0){
+      html += `<div style="margin-top:12px"><strong>Suggested Projects:</strong></div>`;
+      html += `<ul style="margin:10px 0 0 0;padding:0;list-style:none">`;
+      suggestions.forEach((s, idx) => {
+        html += `<li style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,0.02);padding:10px;border-radius:8px;border:1px solid rgba(0,210,255,0.06)">
+          <span style="flex:1;margin-right:10px">${escapeHtml(s)}</span>
+          <button class="btn ghost" style="flex-shrink:0" onclick="copyText('${escapeForInline(s)}')">Copy</button>
+        </li>`;
+      });
+      html += `</ul>`;
+    } else {
+      html += `<div class="muted" style="margin-top:8px">No specific project suggestions available for this concern.</div>`;
+    }
+    
+    // FIXED: Show success response with proper styling
+    showResponse(html, 'success');
+    
+    // Clear textarea after successful submission
+    textarea.value = '';
+    
+    // FIXED: Refresh recommendations in background (don't block user)
+    fetchRecommendations().catch(err => console.error('Failed to refresh recommendations:', err));
+  } catch(err){
+    // FIXED: Show error in responseBox with detailed message
+    const errorMsg = `<strong style="color:#ff4444">✗ Submission Failed</strong><div style="margin-top:8px">${escapeHtml(err.message || 'An unexpected error occurred. Please try again.')}</div><div class="muted" style="margin-top:8px">If symtom persist, please insult your doctor</div>`;
+    showResponse(errorMsg, 'error');
+    console.error('Submission error:', err);
+  } finally { 
+    // FIXED: Always hide loader and re-enable button
+    submitBtn.disabled = false;
+    submitLoader.style.display = 'none'; 
+  }
+}
+
+/**
+ * FIXED: New helper function to show responses with proper styling
+ * @param {string} html - HTML content to display
+ * @param {string} type - 'success' or 'error' for styling
+ */
+function showResponse(html, type = 'info') {
+  responseBox.innerHTML = html;
+  responseBox.className = 'response'; // Reset classes
+  if (type === 'success') {
+    responseBox.classList.add('success');
+  } else if (type === 'error') {
+    responseBox.classList.add('error');
+  }
+  responseBox.style.display = 'block';
+  
+  // FIXED: Smooth scroll to response for better UX
+  setTimeout(() => {
+    responseBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, 100);
+}
+
+/**
+ * FIXED: Clear function now also hides response box
+ */
+function clearInput(){ 
+  textarea.value = ''; 
+  responseBox.style.display = 'none'; 
+  responseBox.className = 'response'; // Reset styling
+}
+
+/* ---------- COPY ---------- */
+function copyText(text){ 
+  const decoded = text.replace(/\\'/g,"'").replace(/\\"/g,'"').replace(/\\\\/g,'\\'); 
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(decoded)
+      .then(() => {
+        // FIXED: Show copy confirmation in a subtle way (optional)
+        console.log('Copied to clipboard:', decoded);
+      })
+      .catch(err => {
+        console.error('Copy failed:', err);
+        prompt('Copy this text manually:', decoded);
+      });
+  } else {
+    // Fallback for older browsers
+    prompt('Copy this text:', decoded);
+  }
+}
+
+/* ---------- RECOMMENDATIONS ---------- */
+const cardsContainer = qs('#cards-container'), recLoader = qs('#recLoader');
+let lastFetched = [];
+
+async function fetchRecommendations(){
+  cardsContainer.innerHTML = ''; 
+  recLoader.style.display = 'inline-block';
+  try {
+    const res = await fetch(`https://script.google.com/macros/s/${DEPLOYED_ID}/exec?token=${SECRET_TOKEN}`);
+    if (!res.ok) {
+      throw new Error(`Failed to fetch: ${res.status} ${res.statusText}`);
+    }
+    const data = await res.json();
+    if(!data || data.success !== true) {
+      throw new Error(data?.error || 'Failed to fetch recommendations');
+    }
+    const arr = Array.isArray(data.data) ? data.data : [];
+    lastFetched = arr;
+    renderCardsFromSheetArray(arr);
+  } catch(err){ 
+    console.error('Error fetching recommendations:', err);
+    cardsContainer.innerHTML = `<div class="muted" style="color:#ff4444">Error loading recommendations: ${escapeHtml(err.message)}</div>`;
+  } finally { 
+    recLoader.style.display = 'none'; 
+  }
+}
+
+function mapRowToItem(rowObj){
+  const keys = Object.keys(rowObj || {});
+  const lower = k => k.toLowerCase();
+  const find = parts => keys.find(k => parts.some(p=>lower(k).includes(p)));
+  const timestampKey = find(['timestamp','date','time']);
+  const messageKey = find(['message','msg','concern']);
+  const mainKey = find(['main','category']);
+  const subKey = find(['sub','subcategory']);
+  const suggestionsKey = find(['suggest','project','suggested','projects']);
+  return {
+    timestamp: rowObj[timestampKey] || rowObj['Timestamp'] || '',
+    message: rowObj[messageKey] || rowObj['Message'] || '',
+    main: rowObj[mainKey] || rowObj['Main'] || '',
+    sub: rowObj[subKey] || rowObj['Sub'] || '',
+    suggestionsRaw: rowObj[suggestionsKey] || rowObj['SuggestedProjects'] || ''
+  };
+}
+
+function renderCardsFromSheetArray(arr){
+  const items = arr.map(mapRowToItem).sort((a,b)=> new Date(b.timestamp)-new Date(a.timestamp));
+  if(items.length===0){ 
+    cardsContainer.innerHTML = '<div class="muted">No recommended projects yet.</div>'; 
+    return; 
+  }
+  cardsContainer.innerHTML = '';
+  items.forEach(item=>{
+    const projects = (safeText(item.suggestionsRaw) || '').split(' | ').map(s=>s.trim()).filter(Boolean);
+    const card = document.createElement('div'); 
+    card.className='card';
+    card.innerHTML = `
+      <div class="meta"><strong>${fmtDate(item.timestamp)}</strong> · <span class="muted">${escapeHtml(item.main)} › ${escapeHtml(item.sub)}</span></div>
+      <div><strong>Message:</strong> ${escapeHtml(item.message)}</div>
+      <div class="projects">${projects.map(p=>`<span class="pill" title="${escapeHtml(p)}">${escapeHtml(p)}</span>`).join('')}</div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+      </div>
+    `;
+    cardsContainer.appendChild(card);
+  });
+}
+
+function openDetails(message, main, sub, projects){
+  const txt = `Message: ${message}\nCategory: ${main} › ${sub}\nProjects: ${projects}`;
+  if(confirm(txt + '\n\nCopy projects to clipboard?')) {
+    const projectList = projects.replace(/ \| /g,'\n');
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(projectList).catch(err => {
+        prompt('Copy this text:', projectList);
+      });
+    } else {
+      prompt('Copy this text:', projectList);
+    }
+  }
+}
+
+/* ---------- FILTER ---------- */
+function filterCards(){ 
+  const q = qs('#search').value.trim().toLowerCase(); 
+  Array.from(cardsContainer.querySelectorAll('.card')).forEach(c=> {
+    c.style.display = c.textContent.toLowerCase().includes(q) ? 'block' : 'none';
+  });
+}
+
+
+/* ---------- IDEAS GENERATOR (client-side mapping) ---------- */
+const SUGGESTIONS_MAP = {
+  "tmf-mf1":["Workbench Filing Improvement System","Ergonomic Tool Holder for Filing Station","Workpiece Angle Guide for Beginner Filing"],
+  "tmf-mf2":["Lathe Tool Holder Organizer Fabrication","Coolant Collection & Management System","Turning Tool Geometry Training Aid"],
+  "tmf-tf":["Digital Measuring Tool Borrowing System","Tool Calibration Log Automation","3D-Printed Measuring Tool Organizer"],
+  "tmf-welding":["Welding Rod Smart Storage Cabinet","Portable Welding Practice Table","Safety Shield & Spark Protection Project"],
+  "exe-xf":["Electronics Component Organizer Drawer","Smart Inventory System for Electronics","Oscilloscope Probe Holder + Anti-tangle System"],
+  "exe-ef1":["House Wiring Trainer Board Upgrade","Circuit Breaker Testing Panel Refurbish","Outlet + Lighting Practice Setup Box"],
+  "exe-ef2":["Modular Motor Control Trainer Panel","Motor Starter Circuit Demonstration Board","Smart Fault Simulation System for Motor Control"],
+  "kaizenset-unknown":["Workplace Organization & 5S Implementation","Process Flow Optimization Study","Safety Signage & Visual Management System"],
+  "uncategorized-unknown":["General Workstation Improvement Project","Safety and Efficiency Audit Project","Training Room Enhancement Proposal"]
+};
+
+function updateSubcategories(){ 
+  const main = qs('#main-category').value; 
+  const sub = qs('#sub-category'); 
+  sub.innerHTML = '<option value="">Choose Subcategory</option>'; 
+  if(main === 'TMF') {
+    ['MF1','MF2','TF','Welding'].forEach(s=> sub.append(new Option(s, s)));
+  } else if(main === 'EXE') {
+    ['XF','EF1','EF2'].forEach(s=> sub.append(new Option(s, s)));
+  } else if(main === 'Kaizenset') {
+    ['Unknown'].forEach(s=> sub.append(new Option(s, s)));
+  }
+  // Clear ideas container when main category changes
+  qs('#ideas-container').innerHTML = '';
+}
+
+function generateIdeas(){ 
+  const main = qs('#main-category').value;
+  const sub = qs('#sub-category').value; 
+  const container = qs('#ideas-container'); 
+  container.innerHTML = ''; 
+  
+  if(!main || !sub) return; 
+  
+  const key = `${main.toLowerCase()}-${sub.toLowerCase()}`;
+  const ideas = SUGGESTIONS_MAP[key] || SUGGESTIONS_MAP['uncategorized-unknown']; 
+  
+  if (!ideas || ideas.length === 0) {
+    container.innerHTML = '<div class="muted">No suggestions available for this category.</div>';
+    return;
+  }
+  
+  ideas.forEach(i => { 
+    const div = document.createElement('div'); 
+    div.className = 'card'; 
+    div.style.marginBottom = '10px'; 
+    div.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+        <div style="flex:1">${escapeHtml(i)}</div>
+        <button class="btn ghost" style="flex-shrink:0" onclick="copyText('${escapeForInline(i)}')">Copy</button>
+      </div>
+    `; 
+    container.appendChild(div); 
+  });
+}
+
+/* ---------- INITIAL LOAD ---------- */
+(async function init(){
+  // Ensure default visible section
+  showSection('submit');
+  
+  // FIXED: Prefetch recommended in background without blocking UI
+  fetchRecommendations().catch(err => {
+    console.error('Initial fetch failed:', err);
+  });
+})();
+
+</script>
+</body>
+</html>
