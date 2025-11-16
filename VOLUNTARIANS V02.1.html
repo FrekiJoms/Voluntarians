@@ -831,26 +831,6 @@ function showSection(id){
   }
 }
 
-/* ---------- MODALS ---------- */
-const modalBackdrop = qs('#modalBackdrop');
-function openModal(){
-  modalBackdrop.classList.add('active');
-  modalBackdrop.setAttribute('aria-hidden','false');
-  document.body.style.overflow = 'hidden';
-  const frame = qs('#dashboardFrame');
-  if(frame && frame.src === 'about:blank') {
-    frame.src = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTzGMwUdbf0twIVwDY1iCqoN1_v1D4T9g6D3qmiRKoAo4W9PxY51vDMUyvI2yyzfFDeG3WrxXba5hV_/pubchart?oid=1006276544&format=interactive';
-  }
-}
-function closeModal(){
-  modalBackdrop.classList.remove('active');
-  modalBackdrop.setAttribute('aria-hidden','true');
-  document.body.style.overflow = '';
-}
-function backdropClick(e){
-  if(e.target === modalBackdrop) closeModal();
-}
-
 /* ---------- SUBMIT ---------- */
 const submitBtn = qs('#submitBtn'), submitLoader = qs('#submitLoader'), responseBox = qs('#response'), textarea = qs('#concern-text');
 
