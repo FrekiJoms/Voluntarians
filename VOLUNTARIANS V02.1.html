@@ -6,124 +6,459 @@
 <title>VOLUNTARIANS</title>
 <style>
 
-  /* Reset & base */
+/* Panel */
+.dashboard-panel {
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.008));
+  border-radius:12px;
+  padding:16px;
+}
+
+/* Cards */
+.analytics-cards { display:flex; gap:12px; flex-wrap:wrap; margin-top:12px; }
+.dashboard-card {
+  background: rgba(10,18,22,0.72);
+  border:1px solid rgba(0,210,255,0.06);
+  border-radius:12px;
+  padding:12px;
+  min-width:220px;
+  cursor:pointer;
+  transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+  display:block;
+}
+.dashboard-card:focus { outline: 2px solid rgba(0,210,255,0.08); outline-offset:2px; }
+.dashboard-card:hover { transform: translateY(-6px); box-shadow: 0 18px 36px rgba(0,210,255,0.06); }
+.dashboard-card.placeholder { opacity:0.5; cursor:default; }
+.card-body { display:flex; justify-content:space-between; align-items:center; gap:12px; min-width:0; }
+.card-heading { font-weight:700; color:#e8fbff; }
+.card-sub { font-size:13px; color:var(--muted); margin-top:2px; }
+.card-actions { display:flex; align-items:center; gap:8px; }
+
+/* Modal (per-card) */
+.card-modal {
+  position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,6,10,0.6); z-index:1300;
+}
+.card-modal[aria-hidden="false"] { display:flex; }
+.card-modal-window {
+  width: min(1100px, 94vw);
+  max-height: 92vh;
+  border-radius:12px;
+  overflow:hidden; /* clip iframe overflow to avoid scrollbars */
+  background: linear-gradient(180deg, rgba(6,12,16,0.98), rgba(8,16,20,0.98));
+  border:1px solid rgba(255,255,255,0.02);
+  display:flex; flex-direction:column;
+}
+.card-modal-header { padding:12px 16px; border-bottom:1px solid rgba(255,255,255,0.02); display:flex; justify-content:space-between; align-items:center; }
+.card-modal-body { padding:0; flex:1 1 auto; min-height:0; display:flex; }
+.card-modal-body iframe { width:100%; height:100%; border:0; display:block; overflow:hidden; }
+
+/* Prevent background page scroll while modal open */
+body.modal-open { overflow:hidden; touch-action:none; }
+
+/* Responsive card widths */
+@media (max-width:900px) { .dashboard-card { min-width:46%; } .card-modal-window { width:96vw; max-height:94vh; } }
+@media (max-width:420px) { .dashboard-card { min-width:100%; } }
+  
+/* Reset & base */
   *, *::before, *::after { box-sizing: border-box; }
-  html,body { height:100%; margin:0; }
-  html, body {
-    -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
-    font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
-    background: linear-gradient(120deg,#041428,#07263a,#03304a);
-    background-size: 300% 300%; animation: grad 14s ease infinite; color:#e8fbff;
-  }
+  html, body { height:100%; margin:0; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial; background: linear-gradient(120deg,#041428,#07263a,#03304a); background-size: 300% 300%; animation: grad 14s ease infinite; color:#e8fbff; overflow-x: hidden; }
   @keyframes grad{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
 
-  /* Prevent horizontal scroll */
-  html, body { overflow-x: hidden; }
+  :root{ --muted:#9fb6c6; --accent1:#00d1ff; --accent2:#1dd3c9; --glass: rgba(255,255,255,0.03); --glass-2: rgba(255,255,255,0.02); --card: rgba(6,14,20,0.75); --max-width:1200px; }
 
-  /* Theme variables */
-  :root{
-    --muted:#9fb6c6; --accent1:#00d1ff; --accent2:#1dd3c9;
-    --glass: rgba(255,255,255,0.03); --glass-2: rgba(255,255,255,0.02);
-    --card: rgba(6,14,20,0.75);
-    --max-width:1200px;
-  }
-
-  /* App container */
+  /* Layout */
   .app { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:28px; }
-  .container {
-    width:100%; max-width:var(--max-width); min-height:78vh;
-    background: linear-gradient(180deg,var(--glass-2), rgba(255,255,255,0.04));
-    border-radius:14px; box-shadow:0 20px 60px rgba(2,8,20,0.75); border:1px solid rgba(255,255,255,0.03);
-    display:flex; flex-direction:column; overflow:hidden;
-  }
+  .container { width:100%; max-width:var(--max-width); min-height:78vh; background: linear-gradient(180deg,var(--glass-2), rgba(255,255,255,0.04)); border-radius:14px; box-shadow:0 20px 60px rgba(2,8,20,0.75); border:1px solid rgba(255,255,255,0.03); display:flex; flex-direction:column; overflow:hidden; }
 
   /* Header */
-  .header { display:flex; align-items:center; justify-content:space-between; padding:14px 20px; border-bottom:1px solid rgba(255,255,255,0.04); backdrop-filter: blur(6px); z-index:2; }
+  .header { display:flex; align-items:center; justify-content:space-between; padding:14px 20px; border-bottom:1px solid rgba(255,255,255,0.04); backdrop-filter: blur(6px); z-index:10; position:relative; }
   .brand { display:flex; gap:14px; align-items:center; }
   .logo-area { width:56px; height:56px; border-radius:12px; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,var(--accent1),var(--accent2)); box-shadow:0 10px 30px rgba(0,210,255,0.06); }
   .title{font-weight:700;font-size:15px;color:#e8fbff}
   .subtitle{font-size:12px;color:var(--muted)}
-  .nav-buttons{display:flex; gap:10px; flex-wrap:wrap}
-  .nav-btn { background:transparent; color:var(--accent1); border:1px solid rgba(0,209,255,0.12); padding:8px 14px;border-radius:8px; cursor:pointer; transition:all .18s; font-size:14px }
-  .nav-btn.active, .nav-btn:hover { background:linear-gradient(90deg,var(--accent1),var(--accent2)); color:#002; box-shadow:0 6px 18px rgba(0,210,255,0.08) }
 
-  /* Main area */
+  /* Nav / hamburger */
+  .hamburger { display:none; flex-direction:column; gap:5px; cursor:pointer; }
+  .hamburger span { width:26px; height:3px; background:var(--accent1); border-radius:2px; }
+  .nav-buttons { display:flex; gap:10px; flex-wrap:wrap; }
+  .nav-btn { background:transparent; color:var(--accent1); border:1px solid rgba(0,209,255,0.12); padding:8px 14px; border-radius:8px; cursor:pointer; transition:all .18s; font-size:14px; }
+  .nav-btn.active, .nav-btn:hover { background: linear-gradient(90deg,var(--accent1),var(--accent2)); color:#002; box-shadow:0 6px 18px rgba(0,210,255,0.08); }
+
+  /* Main */
   .main { display:flex; flex-direction:column; gap:18px; padding:22px; overflow:auto; min-height:calc(78vh - 80px); }
   .section { display:none; opacity:0; transition:opacity .28s ease, transform .28s ease; padding:8px 6px; }
   .section.active { display:block; opacity:1; transform: none; }
-
-  /* Content width control */
   .content-wrap { width:100%; max-width:980px; margin:0 auto; }
 
-  /* Submit */
+  /* Form */
   textarea { width:100%; min-height:150px; background:#0f1a20; color:#e8fbff; border:1px solid rgba(0,210,255,0.12); border-radius:12px; padding:14px; font-size:14px; resize:vertical; box-shadow: inset 0 0 8px rgba(0,0,0,0.35); outline: none; }
   textarea:focus { box-shadow: 0 8px 30px rgba(0,210,255,0.06); border-color: rgba(0,210,255,0.28); }
   .row { display:flex; gap:12px; align-items:center; margin-top:12px; flex-wrap:wrap; }
   .btn { background:linear-gradient(90deg,var(--accent1),var(--accent2)); color:#001; border:none; padding:10px 18px; border-radius:12px; cursor:pointer; font-weight:700 }
   .btn.ghost { background:transparent; color:var(--accent1); border:1px solid rgba(0,210,255,0.06) }
-  
-  /* FIXED: Response box styling with success and error states */
-  .response { 
-    margin-top:14px; padding:14px; 
-    background:var(--card); 
-    border-radius:12px; 
-    box-shadow:0 6px 20px rgba(0,210,255,0.03); 
-    word-break:break-word;
-    border-left: 4px solid var(--accent1);
-  }
-  .response.error {
-    border-left-color: #ff4444;
-    background: rgba(40,10,10,0.75);
-  }
-  .response.success {
-    border-left-color: #00ff88;
-    background: rgba(6,20,14,0.75);
-  }
-  
-  .muted { color:var(--muted); font-size:13px }
 
-  /* Recommended */
+  .response { margin-top:14px; padding:14px; background:var(--card); border-radius:12px; box-shadow:0 6px 20px rgba(0,210,255,0.03); word-break:break-word; border-left: 4px solid var(--accent1); display:none; }
+  .response.error { border-left-color: #ff4444; background: rgba(40,10,10,0.75); }
+  .response.success { border-left-color: #00ff88; background: rgba(6,20,14,0.75); }
+
+  .muted { color:var(--muted); font-size:13px }
+/* Filter container and input visual upgrade */
+.controls {
+  align-items: center;
+  gap: 12px;
+  display: flex;
+  flex-wrap: wrap;
+}
+/* Styled sort control only */
+.sort-wrap { position: relative; display: inline-flex; align-items: center; gap: 8px; }
+.sort-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding: 10px 38px 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,210,255,0.06);
+  background: linear-gradient(180deg, rgba(255,255,255,0.01), transparent);
+  color: #e8fbff;
+  font-size: 14px;
+  min-width: 160px;
+  cursor: pointer;
+  transition: box-shadow .12s ease, transform .08s ease, border-color .12s ease;
+}
+.sort-select:hover { transform: translateY(-1px); }
+.sort-select:focus { outline: none; box-shadow: 0 6px 30px rgba(0,210,255,0.06); border-color: var(--accent1); transform: translateY(-1px); }
+
+.sort-decor {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--muted);
+  font-size: 14px;
+  transition: transform .18s ease, color .12s ease;
+}
+/* Ensure the styled sort select matches the dark theme */
+.sort-select,
+.sort-select:focus,
+.sort-select:active {
+  background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
+  color: #e8fbff;
+  border: 1px solid rgba(0,210,255,0.08);
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  box-shadow: inset 0 2px 12px rgba(0,0,0,0.55);
+  padding-right: 38px; /* keep space for decorative chevron */
+}
+
+/* Attempt to style the native popup list where browsers allow it */
+.sort-select option {
+  background: #071723;
+  color: #e8fbff;
+}
+
+/* IE/Edge value styling */
+.sort-select::-ms-value {
+  color: #e8fbff;
+  background: transparent;
+}
+
+/* iOS / Safari fallback: darken the focused control to reduce white flash */
+@supports (-webkit-touch-callout: none) {
+  .sort-select:focus {
+    background: linear-gradient(180deg, rgba(3,18,24,0.96), rgba(10,24,30,0.96));
+  }
+}
+
+/* Keep decorative chevron readable */
+.sort-decor {
+  color: var(--muted);
+}
+
+/* Hover / focus visual affordance */
+.sort-select:hover { transform: translateY(-1px); }
+.sort-select:focus { outline: none; box-shadow: 0 6px 30px rgba(0,210,255,0.06); border-color: var(--accent1); transform: translateY(-1px); }
+
+/* Small-screen tweak */
+@media (max-width:600px) {
+  .sort-select { min-width: 140px; padding-right: 38px; font-size: 14px; }
+}
+
+.sort-wrap:hover .sort-decor,
+.sort-select:focus + .sort-decor {
+  color: var(--accent1);
+  transform: translateY(-50%) scale(1.04);
+}
+
+@media (max-width:600px) {
+  .sort-select { min-width: 140px; padding-right: 38px; font-size: 14px; }
+}
+
+/* Search input (filter) */
+.search {
+  padding: 10px 14px;
+  min-width: 220px;
+  max-width: 420px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,210,255,0.08);
+  background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
+  color: #e8fbff;
+  font-size: 14px;
+  transition: box-shadow .16s ease, transform .12s ease, border-color .12s ease;
+  box-shadow: 0 4px 18px rgba(2,8,20,0.45) inset;
+}
+
+/* Placeholder color */
+.search::placeholder { color: rgba(255,255,255,0.45); }
+
+/* Focus / hover states for better affordance */
+.search:hover {
+  border-color: rgba(55, 78, 77, 0.14);
+  transform: translateY(-1px);
+}
+.search:focus {
+  outline: none;
+  border-color: var(--accent1);
+  box-shadow: 0 6px 30px rgba(0,210,255,0.08), 0 0 0 4px rgba(0,210,255,0.06);
+  transform: translateY(-2px);
+}
+
+/* Small clear button inside the search input (requires small HTML addition) */
+.search-wrap { position: relative; display: inline-block; }
+.search-clear {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: rgba(255,255,255,0.6);
+  padding: 6px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background .12s ease, color .12s ease, transform .08s ease;
+}
+.search-clear:hover { background: rgba(255,255,255,0.02); color: #fff; transform: translateY(-50%) translateX(-2px); }
+
+/* Sort select styling to match the filter */
+.controls select {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,210,255,0.06);
+  background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
+  color: #e8fbff;
+  font-size: 14px;
+  transition: box-shadow .12s ease, transform .12s ease;
+}
+.controls select:hover { transform: translateY(-1px); }
+.controls select:focus { box-shadow: 0 6px 30px rgba(0,210,255,0.06); outline: none; border-color: var(--accent1); }
+
+/* Small responsive tweak */
+@media (max-width:600px) {
+  .search { min-width: 100%; max-width: none; }
+  .controls { flex-direction: column; align-items: stretch; gap: 10px; }
+}
+/* Ideas — visual polish (no HTML/JS changes) */
+#ideas .content-wrap { padding-top: 6px; }
+
+/* Selects (main + sub) */
+#ideas select {
+  -webkit-appearance: none;
+  appearance: none;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(0,210,255,0.08);
+  background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
+  color: #e8fbff;
+  font-size: 14px;
+  margin-right: 8px;
+  min-width: 160px;
+  transition: box-shadow .14s ease, transform .08s ease, border-color .12s ease;
+  outline: none;
+}
+#ideas select:hover { transform: translateY(-1px); }
+#ideas select:focus { box-shadow: 0 8px 30px rgba(0,210,255,0.06); border-color: var(--accent1); }
+
+/* Container for the selects and buttons inside Ideas (keeps original structure) */
+#ideas .content-wrap > select + select { margin-top: 8px; } /* small vertical gap if stacked */
+#ideas .content-wrap { display:block; }
+
+/* Ideas list container */
+#ideas #ideas-container {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+/* Idea card visuals (applies to any elements you render inside #ideas-container) */
+#ideas .idea-card,
+#ideas .card,
+#ideas #ideas-container > div {
+  background: rgba(10,18,22,0.72);
+  border: 1px solid rgba(0,210,255,0.06);
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 8px 26px rgba(0,210,255,0.02);
+  transition: transform .12s cubic-bezier(.2,.9,.2,1), box-shadow .12s ease, background .12s ease;
+}
+
+/* Slight lift + stronger shadow on hover/focus to indicate interactivity */
+#ideas #ideas-container > div:hover,
+#ideas #ideas-container > div:focus-within {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 44px rgba(0,210,255,0.06);
+  background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));
+}
+
+/* Title inside each idea card (if you render a title element or plain text) */
+#ideas #ideas-container .title,
+#ideas #ideas-container .idea-title,
+#ideas #ideas-container h3,
+#ideas #ideas-container .card .title {
+  font-weight:700;
+  font-size:15px;
+  margin:0 0 6px 0;
+  color: #e8fbff;
+}
+
+/* Meta / small text */
+#ideas #ideas-container .meta,
+#ideas #ideas-container .muted {
+  color: var(--muted);
+  font-size:13px;
+  margin: 0;
+}
+
+/* Buttons inside idea items — reuse your .btn and .btn.ghost but tighten spacing */
+#ideas #ideas-container .btn,
+#ideas #ideas-container .btn.ghost {
+  padding: 8px 12px;
+  font-size:13px;
+  border-radius:10px;
+}
+#ideas #ideas-container .btn.ghost { background: transparent; border: 1px solid rgba(0,210,255,0.06); color: var(--accent1); }
+#ideas #ideas-container .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(0,210,255,0.04); }
+
+/* Fine-tune copy feedback small state */
+#ideas #ideas-container .btn.copied {
+  background: linear-gradient(90deg,var(--accent2),var(--accent1));
+  color: #001;
+}
+/* Make native selects match the dark theme and avoid white dropdowns */
+#ideas select,
+#ideas select:focus,
+#ideas select:active {
+  background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
+  color: #e8fbff;
+  border: 1px solid rgba(0,210,255,0.08);
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+/* Ensure the selected option in the closed control is styled (value area) */
+#ideas select::-ms-value { /* IE/Edge */
+  color: #e8fbff;
+  background: transparent;
+}
+
+/* Try to style the native popup list background where browsers allow it */
+#ideas select option {
+  background: #071723; /* dark popup background */
+  color: #e8fbff;      /* option text color */
+}
+
+/* WebKit: attempt to reduce white flash on open by forcing system dropdown styling */
+#ideas select::-webkit-calendar-picker-indicator,
+#ideas select::-webkit-contacts-auto-fill-button {
+  display: none !important;
+}
+
+/* Add a custom inner shadow so the control looks cohesive with the app */
+#ideas select {
+  box-shadow: inset 0 2px 12px rgba(0,0,0,0.55);
+}
+
+/* Keep padding for the value area so the chevron (if present) doesn't overlap */
+#ideas select { padding-right: 14px; }
+
+/* On mobile Safari / iOS the OS still governs the full-screen picker.
+   Use a fallback darker background when the control is focused to reduce visual jank. */
+@supports (-webkit-touch-callout: none) {
+  #ideas select:focus {
+    background: linear-gradient(180deg, rgba(3,18,24,0.96), rgba(10,24,30,0.96));
+  }
+}
+
+/* Optional small tweak: if you added .sort-decor or other children next to selects,
+   ensure they remain readable on dark backgrounds */
+#ideas .sort-decor,
+#ideas .select-decor {
+  color: var(--muted);
+}
+
+/* Responsive adjustments */
+@media (max-width:900px) {
+  #ideas #ideas-container { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  #ideas select { min-width: 140px; font-size:14px; }
+}
+
+@media (max-width:600px) {
+  #ideas .content-wrap > select { display:block; width:100%; margin-right:0; margin-bottom:8px; }
+  #ideas #ideas-container { grid-template-columns: 1fr; gap:10px; }
+  #ideas #ideas-container > div { padding:10px; border-radius:10px; }
+}
+
+  /* Controls & cards */
   .controls{ display:flex; gap:10px; margin-bottom:16px; align-items:center; flex-wrap:wrap }
   .search { padding:8px 10px; background:#0f1a20; border-radius:10px; border:1px solid rgba(0,210,255,0.06); color:#e8fbff; min-width:200px; }
-  .card { background:rgba(10,18,22,0.72); border:1px solid rgba(0,210,255,0.06); border-radius:12px; padding:12px; margin-bottom:12px; box-shadow:0 8px 28px rgba(0,210,255,0.02); }
+  .card { background:rgba(10,18,22,0.72); border:1px solid rgba(0,210,255,0.06); border-radius:12px; padding:12px; margin-bottom:12px; box-shadow:0 8px 28px rgba(0,210,255,0.02); max-width:100%; overflow-x:hidden; word-break:break-word; }
   .card .meta { color:var(--muted); font-size:13px; margin-bottom:8px }
   .projects { margin-top:8px; display:flex; gap:8px; flex-wrap:wrap }
   .pill { padding:6px 10px; border-radius:999px; background:rgba(255,255,255,0.02); border:1px solid rgba(0,210,255,0.06); font-size:13px; cursor:pointer }
 
-  /* Ideas generator */
-  select { width:100%; padding:10px; border-radius:10px; border:1px solid rgba(0,210,255,0.06); background:#0f1a20; color:#e8fbff; margin-bottom:10px }
+  /* Multi-line preview clamp + safe wrapping */
+  .msg-preview {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.25em;
+    max-height: calc(1.25em * 4);
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    hyphens: auto;
+    box-sizing: border-box;
+    background: transparent;
+  }
 
-  /* Spinner */
+  /* Modal */
+  .modal-backdrop { position: fixed; inset: 0; width:100%; height:100%; display:none; background: rgba(0,0,0,0.55); backdrop-filter: blur(8px); z-index:2500; align-items:center; justify-content:center; padding:22px; }
+  .modal-backdrop.active { display:flex; }
+  .modal-window { width:100%; max-width:980px; max-height:88vh; border-radius:14px; padding:18px; background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); box-shadow: 0 30px 80px rgba(0,0,0,0.6), 0 2px 12px rgba(0,210,255,0.04); border: 1px solid rgba(255,255,255,0.04); transform: translateY(8px) scale(.96); opacity:0; transition: transform .28s cubic-bezier(.2,.9,.22,1), opacity .22s ease; display:flex; flex-direction:column; }
+  .modal-backdrop.active .modal-window { transform: translateY(0) scale(1); opacity:1; }
+  .modal-header { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px; }
+  .modal-header h3 { margin:0; font-size:18px; }
+  .modal-body { overflow-y:auto; overflow-x:hidden; padding-right:6px; max-height:72vh; word-break:break-word; }
+
   .spinner { width:18px; height:18px; border-radius:50%; border:3px solid rgba(255,255,255,0.08); border-top-color:var(--accent1); animation:spin .9s linear infinite; display:inline-block; vertical-align:middle }
   @keyframes spin{ to { transform:rotate(360deg) } }
 
-  /* MODAL - frosted glass popup */
-  .modal-backdrop {
-    position: fixed; inset: 0; width:100%; height:100%; display:none;
-    background: rgba(0,0,0,0.55); backdrop-filter: blur(8px); z-index:2500;
-    align-items:center; justify-content:center; padding:22px; 
-  }
-  .modal-backdrop.active { display:flex; }
-
-  .modal-window {
-    width:100%; max-width:980px; max-height:88vh; border-radius:14px; padding:18px;
-    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-    box-shadow: 0 30px 80px rgba(0,0,0,0.6), 0 2px 12px rgba(0,210,255,0.04);
-    border: 1px solid rgba(255,255,255,0.04);
-    transform: translateY(8px) scale(.96); opacity:0; transition: transform .28s cubic-bezier(.2,.9,.22,1), opacity .22s ease;
-    display:flex; flex-direction:column;
-  }
-  .modal-backdrop.active .modal-window { transform: translateY(0) scale(1); opacity:1; }
-
-  .modal-header { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px; }
-  .modal-header h3 { margin:0; font-size:18px; }
-  .modal-body { overflow:auto; padding-right:6px; }
-
-  /* small screens */
-  @media (max-width:900px) {
-    .container { border-radius:10px; }
-    .main { padding:16px; }
-    .modal-window { padding:14px; max-width: 96%; max-height:92vh; }
+  /* Mobile adjustments */
+  @media (max-width:900px) { .container { border-radius:10px; } .main { padding:16px; } .modal-window { padding:14px; max-width: 96%; max-height:92vh; } }
+  @media (max-width:600px) {
+    .hamburger { display:flex; }
+    .header .nav-buttons { position:absolute; top:100%; left:0; width:100%; background:rgba(10,18,22,0.95); justify-content:center; gap:10px; padding:12px; border-bottom:1px solid rgba(255,255,255,0.06); display:none; z-index:100; flex-direction:row; }
+    .header .nav-buttons.active { display:flex; animation:navFadeIn .25s ease; }
+    @keyframes navFadeIn { from{opacity:0; transform:translateY(-8px);} to{opacity:1; transform:translateY(0);} }
+    .header .nav-btn { padding:10px 14px; font-size:14px; border-radius:8px; }
+    .msg-preview { -webkit-line-clamp: 3; max-height: calc(1.25em * 3); }
+    .card { padding:10px; font-size:14px; }
+    .projects { flex-direction:column; gap:8px; }
   }
 </style>
 </head>
@@ -131,52 +466,52 @@
   <div class="app">
     <div class="container" id="appContainer" aria-live="polite">
 
-      <!-- HOME / START SCREEN -->
+      <!-- START SCREEN -->
       <div id="homeScreen" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:28px;text-align:center;z-index:2200;background:rgba(0,0,0,0.44);backdrop-filter: blur(14px);">
         <div style="width:140px;height:140px;border-radius:20px;background:linear-gradient(135deg,var(--accent1),var(--accent2));display:flex;align-items:center;justify-content:center;box-shadow:0 12px 40px rgba(0,210,255,0.12)">
-          <img src="file:///C:/Users/Boss/Documents/AILA%20INTERFACE/ICT%20PIN%20LOGO/COPY%20PNG.png" alt="Voluntarians Logo" style="width:110px;height:110px;border-radius:12px;"/>
+          <img src="placeholder-logo" alt="Voluntarians Logo" style="width:110px;height:110px;border-radius:12px;">
         </div>
         <h1 style="margin:0;font-size:24px;font-weight:800">VOLUNTARIANS HUB</h1>
-        <p style="max-width:520px;margin:0;color:var(--muted)">A hub that connects problems to solutions.<break>The rise of an era of Volunteers, <strong>the Voluntarians.</strong></break></p>
+        <p style="max-width:520px;margin:0;color:var(--muted)">A hub that connects problems to solutions. The rise of an era of Volunteers, <strong>the Voluntarians.</strong></p>
         <button id="startBtn" style="margin-top:6px;padding:12px 26px;border-radius:12px;border:none;font-weight:800;background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#001;cursor:pointer;box-shadow:0 10px 30px rgba(0,210,255,0.06)">Start</button>
         <div class="muted" style="margin-top:6px">Submit concerns • Generate project ideas • Improve training productivity</div>
       </div>
 
       <!-- Header -->
       <div class="header" role="banner">
-  <div class="brand" role="img" aria-label="Voluntarians Hub">
-    <div class="logo-area">
-      <img src="file:///C:/Users/Boss/Documents/AILA%20INTERFACE/ICT%20PIN%20LOGO/COPY%20PNG.png" 
-           alt="Voluntarians Logo" 
-           style="width:40px;height:40px;border-radius:8px">
-    </div>
-    <div>
-      <div class="title">VOLUNTARIANS HUB</div>
-      <div class="subtitle">Community Platform v2.1</div>
-    </div>
-  </div>
+        <div class="brand" role="img" aria-label="Voluntarians Hub">
+          <div class="logo-area"><img src="" alt="Logo" style="width:40px;height:40px;border-radius:8px"></div>
+          <div>
+            <div class="title">VOLUNTARIANS HUB</div>
+            <div class="subtitle">Community Platform v2.1</div>
+          </div>
+        </div>
 
-  <div class="nav-buttons" role="navigation" aria-label="Main navigation">
-    <button class="nav-btn active" data-target="submit" onclick="handleNav(event)" aria-label="Report an Issue">Report Issue</button>
-    <button class="nav-btn" data-target="recommended" onclick="handleNav(event)" aria-label="View Messages">Messages</button>
-    <button class="nav-btn" data-target="ideas" onclick="handleNav(event)" aria-label="Explore Ideas">Ideas</button>
-    <button class="nav-btn" data-target="dashboardPage" onclick="handleNav(event)" aria-label="View Analytics">Analytics</button>
-  </div>
-</div>
+        <div class="hamburger" id="hamburger" aria-controls="primaryNav" aria-expanded="false" role="button" tabindex="0">
+          <span></span><span></span><span></span>
+        </div>
+
+        <div id="primaryNav" class="nav-buttons" role="navigation" aria-label="Main navigation">
+          <button class="nav-btn active" data-target="submit" onclick="handleNav(event)">Report Issue</button>
+          <button class="nav-btn" data-target="recommended" onclick="handleNav(event)">Messages</button>
+          <button class="nav-btn" data-target="ideas" onclick="handleNav(event)">Ideas</button>
+          <button class="nav-btn" data-target="dashboardPage" onclick="handleNav(event)">Analytics</button>
+        </div>
+      </div>
+
       <!-- Main -->
       <div class="main" role="main">
         <!-- Submit -->
         <section id="submit" class="section active">
           <div class="content-wrap">
-            <h1>Report an Issue or Ideas</h1>
-            <textarea id="concern-text" aria-label="Your concern" placeholder="Write your concern here..."></textarea>
+            <h1>Report an Issue</h1>
+            <textarea id="concern-text" aria-label="Your concern" placeholder="Describe the issue or concern in detail..."></textarea>
             <div class="row" style="margin-top:12px;">
-              <button id="submitBtn" class="btn" onclick="submitConcern()">Submit</button>
-              <button id="clearBtn" class="btn ghost" onclick="clearInput()">Clear</button>
-              <div id="submitLoader" style="display:none"><span class="spinner" aria-hidden="true"></span> Sending...</div>
+              <button id="submitBtn" class="btn" onclick="submitConcern()">Send Report</button>
+              <button id="clearBtn" class="btn ghost" onclick="clearInput()">Reset Form</button>
+              <div id="submitLoader" style="display:none"><span class="spinner" aria-hidden="true"></span> Submitting your concern...</div>
             </div>
-            <!-- FIXED: Response box now always exists in DOM, visibility controlled by display property -->
-            <div id="response" class="response" style="display:none" aria-live="polite"></div>
+            <div id="response" class="response" aria-live="polite"></div>
           </div>
         </section>
 
@@ -185,7 +520,17 @@
           <div class="content-wrap">
             <h2>Messages</h2>
             <div class="controls">
-              <input id="search" class="search" placeholder="Search recommended..." oninput="filterCards()" aria-label="Search recommended">
+             <div class="sort-wrap" style="margin-bottom:12px">
+                <select id="sortOrder" class="sort-select" onchange="sortCards()" aria-label="Sort messages">
+                  <option value="newest">Newest First</option>
+                  <option value="oldest">Oldest First</option>
+                </select>
+              <div class="sort-decor" aria-hidden="true">▾</div>
+            </div>
+        <div class="search-wrap">
+              <input id="search" class="search" placeholder="Search recommended..." oninput="filterCards()" aria-label="Search recommended" />
+              <button class="search-clear" onclick="qs('#search').value=''; filterCards();" aria-label="Clear search">✕</button>
+          </div>
               <div style="display:flex; gap:8px;">
                 <button class="btn ghost" onclick="fetchRecommendations()">Refresh</button>
               </div>
@@ -195,28 +540,10 @@
           </div>
         </section>
 
-        <!-- Dashboard Page -->
-        <section id="dashboardPage" class="section">
-          <div class="content-wrap">
-            <div style="background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.008)); border-radius:12px; padding:16px; display:flex; flex-direction:column; gap:12px;">
-              <div style="display:flex; justify-content:space-between; align-items:center;">
-                <div>
-                  <div style="font-weight:800;font-size:16px">📊 Voluntarians Dashboard</div>
-                  <div class="muted" style="margin-top:6px">View analytics, activity trends, and live charts pulled from Google Sheets.</div>
-                </div>
-                <div>
-                  <button class="btn" onclick="openModal()">Open Dashboard</button>
-                </div>
-              </div>
-              <div class="muted">Tip: nandito naka lagay kung ano yung mostly requested.</div>
-            </div>
-          </div>
-        </section>
-
         <!-- Ideas -->
         <section id="ideas" class="section">
           <div class="content-wrap">
-            <h2>ideas</h2>
+            <h2>Ideas</h2>
             <p class="muted">Choose a category to see suggested projects</p>
             <select id="main-category" onchange="updateSubcategories()" aria-label="Main category">
               <option value="">Choose Main Category</option>
@@ -230,31 +557,244 @@
             <div id="ideas-container" class="ideas" style="margin-top:14px"></div>
           </div>
         </section>
+
+<!-- Dashboard Page -->
+<section id="dashboardPage" class="section">
+  <div class="content-wrap" style="margin-top:8px">
+  <div class="dashboard-panel">
+    <div class="panel-head">
+      <div>
+        <div class="panel-title">📊 Voluntarians Dashboard</div>
+        <div class="muted panel-sub">View analytics, activity trends, and live charts pulled from Google Sheets.</div>
       </div>
+    </div>
+
+    <div class="muted" style="margin-top:8px">Tip: nandito naka lagay kung ano yung mostly requested.</div>
+
+    <div class="analytics-cards" style="margin-top:12px">
+      <!-- Main Analytics card -->
+      <div class="dashboard-card" data-key="main">
+        <div class="card-body">
+          <div>
+            <div class="card-heading">Main Analytics</div>
+            <div class="card-sub muted">All categories (donut)</div>
+          </div>
+          <div class="card-actions">
+            <button class="btn" data-key="main">View</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- EXE -->
+      <div class="dashboard-card" data-key="exe">
+        <div class="card-body">
+          <div>
+            <div class="card-heading">EXE Analytics</div>
+            <div class="card-sub muted">EXE subcategories (donut)</div>
+          </div>
+          <div class="card-actions">
+            <button class="btn" data-key="exe">View</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TMF -->
+      <div class="dashboard-card" data-key="tmf">
+        <div class="card-body">
+          <div>
+            <div class="card-heading">TMF Analytics</div>
+            <div class="card-sub muted">TMF subcategories (donut)</div>
+          </div>
+          <div class="card-actions">
+            <button class="btn" data-key="tmf">View</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Kaizenset -->
+      <div class="dashboard-card" data-key="kaizenset">
+        <div class="card-body">
+          <div>
+            <div class="card-heading">Kaizenset Analytics</div>
+            <div class="card-sub muted">Kaizenset (donut)</div>
+          </div>
+          <div class="card-actions">
+            <button class="btn" data-key="kaizenset">View</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Placeholder -->
+      <div class="dashboard-card placeholder" aria-hidden="true">
+        <div class="card-body">
+          <div>
+            <div class="card-heading">Add more</div>
+            <div class="card-sub muted">Placeholder</div>
+          </div>
+          <div class="card-actions">
+            <div class="card-count muted">+</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+</section>
+
+  <!-- Message Modal -->
+  <div id="messageModalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true" onclick="closeMessageModal()">
+    <div class="modal-window" role="document" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3>📩 Message Details</h3>
+        <button class="btn ghost" style="font-weight:bold;font-size:18px;line-height:1;" onclick="closeMessageModal()">✕</button>
+      </div>
+      <div class="modal-body" id="messageModalBody"></div>
     </div>
   </div>
 
-  <!-- Modal (frosted) -->
-  <div id="modalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true" onclick="backdropClick(event)">
-    <div class="modal-window" role="document" onclick="event.stopPropagation()">
-      <div class="modal-header">
+ <!-- Per-card modals (one per card) -->
+<!-- Modal (frosted) -->
+  <div id="modal-main" class="card-modal" role="dialog" aria-modal="true" aria-hidden="true" onclick="backdropClick(event,'main')">
+    <div class="card-modal-window" role="document" onclick="event.stopPropagation()">
+      <header class="card-modal-header">
         <h3>📊 Voluntarians Dashboard</h3>
-        <div>
-          <button class="btn ghost" onclick="closeModal()">Close</button>
-        </div>
-      </div>
-      <div class="modal-body" id="modalBody">
-        <iframe id="dashboardFrame" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vTzGMwUdbf0twIVwDY1iCqoN1_v1D4T9g6D3qmiRKoAo4W9PxY51vDMUyvI2yyzfFDeG3WrxXba5hV_/pubchart?oid=1006276544&format=interactive" style="width:100%;height:100%;border:none"></iframe>
-      </div>
+      <div><button class="btn ghost" onclick="closeCardModal('main')">Close</button></div>
+      </header>
+      <main class="card-modal-body">
+        <iframe id="iframe-main" src="" frameborder="0" loading="lazy"></iframe>
+      </main>
     </div>
   </div>
+
+<!-- EXE modal -->
+<div id="modal-exe" class="card-modal" aria-hidden="true" role="dialog" aria-modal="true" onclick="modalBackdropClick(event,'exe')">
+  <div class="card-modal-window" role="document" onclick="event.stopPropagation()">
+    <header class="card-modal-header">
+      <h3>EXE Analytics</h3>
+      <div><button class="btn ghost" onclick="closeCardModal('exe')">Close</button></div>
+    </header>
+    <main class="card-modal-body">
+      <iframe id="iframe-exe" src="" frameborder="0" loading="lazy"></iframe>
+    </main>
+  </div>
+</div>
+
+<!-- TMF modal -->
+<div id="modal-tmf" class="card-modal" aria-hidden="true" role="dialog" aria-modal="true" onclick="modalBackdropClick(event,'tmf')">
+  <div class="card-modal-window" role="document" onclick="event.stopPropagation()">
+    <header class="card-modal-header">
+      <h3>TMF Analytics</h3>
+      <div><button class="btn ghost" onclick="closeCardModal('tmf')">Close</button></div>
+    </header>
+    <main class="card-modal-body">
+      <iframe id="iframe-tmf" src="about:blank" frameborder="0" loading="lazy"></iframe>
+    </main>
+  </div>
+</div>
+
+<!-- Kaizenset modal -->
+<div id="modal-kaizenset" class="card-modal" aria-hidden="true" role="dialog" aria-modal="true" onclick="modalBackdropClick(event,'kaizenset')">
+  <div class="card-modal-window" role="document" onclick="event.stopPropagation()">
+    <header class="card-modal-header">
+      <h3>Kaizenset Analytics</h3>
+      <div><button class="btn ghost" onclick="closeCardModal('kaizenset')">Close</button></div>
+    </header>
+    <main class="card-modal-body">
+      <iframe id="iframe-kaizenset" src="about:blank" frameborder="0" loading="lazy"></iframe>
+    </main>
+  </div>
+</div>
 
 <script>
 /* ---------- CONFIG ---------- */
 const DEPLOYED_ID = 'AKfycbzqWj68wUYgGSht2rUD8vMSsjVVOGXzxF-OHQSFPq0_Kl6oj3YfSOsFMOZkwNFD27fj-A';
 const SECRET_TOKEN = 'vtjmn027';
 
-/* ---------- UTILS ---------- */
+/*
+  Replace the URLs below with your published Google Sheets pubchart URLs
+  or with WRAPPER_URL + '?src=' + encodeURIComponent(pubchartURL) if you host the responsive wrapper.
+*/
+const CARD_CHARTS = {
+  main:      'https://docs.google.com/spreadsheets/d/e/2PACX-1vTzGMwUdbf0twIVwDY1iCqoN1_v1D4T9g6D3qmiRKoAo4W9PxY51vDMUyvI2yyzfFDeG3WrxXba5hV_/pubchart?oid=1006276544&format=interactive',
+  exe:       'https://docs.google.com/spreadsheets/d/e/YOUR_EXE_PUBURL/pubchart?oid=YYY&format=interactive',
+  tmf:       'https://docs.google.com/spreadsheets/d/e/YOUR_TMF_PUBURL/pubchart?oid=ZZZ&format=interactive',
+  kaizenset: 'https://docs.google.com/spreadsheets/d/e/YOUR_KAIZEN_PUBURL/pubchart?oid=AAA&format=interactive'
+};
+
+// open per-card modal
+function openCardModal(key){
+  const modal = document.getElementById('modal-' + key);
+  const iframe = document.getElementById('iframe-' + key);
+  if(!modal || !iframe) return;
+  // load chart (swap for wrapper if necessary)
+  iframe.src = CARD_CHARTS[key] || CARD_CHARTS.main;
+  modal.setAttribute('aria-hidden','false');
+  document.documentElement.classList.add('modal-open');
+  document.body.classList.add('modal-open');
+  // focus close for accessibility
+  setTimeout(()=> {
+    const btn = modal.querySelector('button[aria-label="Close chart"], button');
+    if(btn) btn.focus();
+  }, 50);
+}
+
+// close per-card modal
+function closeCardModal(key){
+  const modal = document.getElementById('modal-' + key);
+  const iframe = document.getElementById('iframe-' + key);
+  if(modal) modal.setAttribute('aria-hidden','true');
+  document.documentElement.classList.remove('modal-open');
+  document.body.classList.remove('modal-open');
+  if(iframe) iframe.src = 'about:blank';
+}
+
+// backdrop click handler (only close when clicking backdrop)
+function modalBackdropClick(e, key){
+  if(e.target && e.currentTarget && e.target === e.currentTarget) closeCardModal(key);
+}
+
+// wire click handlers: card body and view buttons
+document.addEventListener('click', function(e){
+  const viewBtn = e.target.closest('.view-btn');
+  if(viewBtn){
+    const key = viewBtn.getAttribute('data-key');
+    if(key) openCardModal(key);
+    e.stopPropagation();
+    return;
+  }
+
+  const card = e.target.closest('.dashboard-card');
+  if(card && !card.classList.contains('placeholder')){
+    const key = card.getAttribute('data-key');
+    if(key) openCardModal(key);
+  }
+});
+
+// keyboard: allow Enter/Space to open focused card
+document.addEventListener('keydown', function(e){
+  if((e.key === 'Enter' || e.key === ' ') && document.activeElement && document.activeElement.classList.contains('dashboard-card')){
+    e.preventDefault();
+    const key = document.activeElement.getAttribute('data-key');
+    if(key) openCardModal(key);
+  }
+
+  // ESC closes any open modal
+  if(e.key === 'Escape'){
+    ['main','exe','tmf','kaizenset'].forEach(k=>{
+      const m = document.getElementById('modal-' + k);
+      if(m && m.getAttribute('aria-hidden') === 'false') closeCardModal(k);
+    });
+  }
+});
+
+// Keep your existing message modal close function if present
+window.closeMessageModal = window.closeMessageModal || function(){
+  const b = document.getElementById('messageModalBackdrop');
+  if(b) b.setAttribute('aria-hidden','true');
+};
+
+/* ---------- HELPERS ---------- */
 function qs(s){ return document.querySelector(s); }
 function qsa(s){ return Array.from(document.querySelectorAll(s)); }
 function fmtDate(src){ if(!src) return ''; const d=new Date(src); return isNaN(d)?src:d.toLocaleString(); }
@@ -262,7 +802,7 @@ function safeText(t){ return (t===undefined||t===null)?'':String(t); }
 function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function escapeForInline(s){ return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'\\"').replace(/\n/g,' '); }
 
-/* ---------- HOME START ---------- */
+/* ---------- START SCREEN ---------- */
 const homeScreen = qs('#homeScreen'), startBtn = qs('#startBtn');
 startBtn.addEventListener('click', () => {
   homeScreen.style.transition = "opacity .8s ease, transform .6s ease";
@@ -284,21 +824,23 @@ function showSection(id){
   const el = qs('#'+id);
   if(el) el.classList.add('active');
   qs('.main').scrollTop = 0;
+
+  // refresh messages when user opens recommended
+  if (id === 'recommended') {
+    fetchRecommendations().catch(err => console.error('Refresh failed:', err));
+  }
 }
 
-/* ---------- MODAL (POPUP) ---------- */
+/* ---------- MODALS ---------- */
 const modalBackdrop = qs('#modalBackdrop');
 function openModal(){
-  const active = qsa('.nav-btn').find(b=>b.classList.contains('active'));
-  if(!active || active.getAttribute('data-target') !== 'dashboardPage'){
-    qsa('.nav-btn').forEach(b=>b.classList.remove('active'));
-    const dashBtn = qsa('.nav-btn').find(b => b.getAttribute('data-target') === 'dashboardPage');
-    if(dashBtn) dashBtn.classList.add('active');
-    showSection('dashboardPage');
-  }
   modalBackdrop.classList.add('active');
-  modalBackdrop.setAttribute('aria-hidden','true');
+  modalBackdrop.setAttribute('aria-hidden','false');
   document.body.style.overflow = 'hidden';
+  const frame = qs('#dashboardFrame');
+  if(frame && frame.src === 'about:blank') {
+    frame.src = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTzGMwUdbf0twIVwDY1iCqoN1_v1D4T9g6D3qmiRKoAo4W9PxY51vDMUyvI2yyzfFDeG3WrxXba5hV_/pubchart?oid=1006276544&format=interactive';
+  }
 }
 function closeModal(){
   modalBackdrop.classList.remove('active');
@@ -309,148 +851,69 @@ function backdropClick(e){
   if(e.target === modalBackdrop) closeModal();
 }
 
-/* ---------- SUBMIT CONCERN ---------- */
+/* ---------- SUBMIT ---------- */
 const submitBtn = qs('#submitBtn'), submitLoader = qs('#submitLoader'), responseBox = qs('#response'), textarea = qs('#concern-text');
 
 async function submitConcern(){
   const message = textarea.value.trim();
-  
-  // FIXED: Show validation error in responseBox instead of alert()
-  if(!message){ 
-    showResponse('Please enter a concern before submitting.', 'error');
-    return; 
-  }
-  
-  // Start submission process
-  submitBtn.disabled = true; 
-  submitLoader.style.display = 'inline-block'; 
+  if(!message){ showResponse('Please enter a concern before submitting.', 'error'); return; }
+  submitBtn.disabled = true;
+  submitLoader.style.display = 'inline-block';
   responseBox.style.display = 'none';
-  
   try {
     const res = await fetch(`https://script.google.com/macros/s/${DEPLOYED_ID}/exec`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ 
-        token: SECRET_TOKEN, 
-        message: message, 
-        source: 'VOLUN', 
-        extra: '' 
-      }),
-      // FIXED: Added redirect mode to handle Google Apps Script redirects
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: SECRET_TOKEN, message: message, source: 'VOLUN', extra: '' }),
       redirect: 'follow'
     });
-    
-    // FIXED: Better error handling for non-OK responses
-    if (!res.ok) {
-      throw new Error(`Server responded with status ${res.status}: ${res.statusText}`);
-    }
-    
+    if (!res.ok) throw new Error(`Server responded with status ${res.status}: ${res.statusText}`);
     const data = await res.json();
-    
-    // FIXED: Check for success flag and provide meaningful error messages
-    if(!data || data.success !== true) {
-      throw new Error(data?.error || data?.message || 'Server returned an error. Please try again.');
-    }
-    
-    // FIXED: Safely extract category data with fallbacks
+    if(!data || data.success !== true) throw new Error(data?.error || data?.message || 'Server returned an error. Please try again.');
     const catMain = (data.category && data.category.main) ? data.category.main : 'Uncategorized';
     const catSub = (data.category && data.category.sub) ? data.category.sub : 'Unknown';
-    
-    // FIXED: Handle suggestions in various formats (array, string, or missing)
     let suggestions = [];
-    if (Array.isArray(data.suggestions)) {
-      suggestions = data.suggestions;
-    } else if (typeof data.suggestions === 'string' && data.suggestions.trim()) {
-      suggestions = data.suggestions.split('|').map(s => s.trim()).filter(Boolean);
-    }
-    
-    // Build success message with proper HTML structure
+    if (Array.isArray(data.suggestions)) suggestions = data.suggestions;
+    else if (typeof data.suggestions === 'string' && data.suggestions.trim()) suggestions = data.suggestions.split('|').map(s => s.trim()).filter(Boolean);
     let html = `<div style="margin-bottom:10px"><strong style="color:#00ff88">✓ Concern Submitted Successfully!</strong></div>`;
     html += `<div class="muted" style="margin-bottom:10px">Category: <strong>${escapeHtml(catMain)}</strong> › <strong>${escapeHtml(catSub)}</strong></div>`;
-    
-    if(suggestions.length > 0){
-      html += `<div style="margin-top:12px"><strong>Suggested Projects:</strong></div>`;
-      html += `<ul style="margin:10px 0 0 0;padding:0;list-style:none">`;
-      suggestions.forEach((s, idx) => {
-        html += `<li style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,0.02);padding:10px;border-radius:8px;border:1px solid rgba(0,210,255,0.06)">
-          <span style="flex:1;margin-right:10px">${escapeHtml(s)}</span>
-          <button class="btn ghost" style="flex-shrink:0" onclick="copyText('${escapeForInline(s)}')">Copy</button>
-        </li>`;
+    if(suggestions.length>0){
+      html += `<div style="margin-top:12px"><strong>Suggested Projects:</strong></div><ul style="margin:10px 0 0 0;padding:0;list-style:none">`;
+      suggestions.forEach(s=>{
+        html += `<li style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,0.02);padding:10px;border-radius:8px;border:1px solid rgba(0,210,255,0.06)"><span style="flex:1;margin-right:10px">${escapeHtml(s)}</span><button class="btn ghost" style="flex-shrink:0" onclick="copyText('${escapeForInline(s)}')">Copy</button></li>`;
       });
       html += `</ul>`;
     } else {
       html += `<div class="muted" style="margin-top:8px">No specific project suggestions available for this concern.</div>`;
     }
-    
-    // FIXED: Show success response with proper styling
     showResponse(html, 'success');
-    
-    // Clear textarea after successful submission
     textarea.value = '';
-    
-    // FIXED: Refresh recommendations in background (don't block user)
-    fetchRecommendations().catch(err => console.error('Failed to refresh recommendations:', err));
+    fetchRecommendations().catch(err=>console.error('Failed to refresh recommendations:', err));
   } catch(err){
-    // FIXED: Show error in responseBox with detailed message
-    const errorMsg = `<strong style="color:#ff4444">✗ Submission Failed</strong><div style="margin-top:8px">${escapeHtml(err.message || 'An unexpected error occurred. Please try again.')}</div><div class="muted" style="margin-top:8px">If symtom persist, please insult your doctor</div>`;
+    const errorMsg = `<strong style="color:#ff4444">✗ Submission Failed</strong><div style="margin-top:8px">${escapeHtml(err.message || 'An unexpected error occurred. Please try again.')}</div><div class="muted" style="margin-top:8px">If the problem persists, please contact your administrator.</div>`;
     showResponse(errorMsg, 'error');
     console.error('Submission error:', err);
-  } finally { 
-    // FIXED: Always hide loader and re-enable button
+  } finally {
     submitBtn.disabled = false;
-    submitLoader.style.display = 'none'; 
+    submitLoader.style.display = 'none';
   }
 }
-
-/**
- * FIXED: New helper function to show responses with proper styling
- * @param {string} html - HTML content to display
- * @param {string} type - 'success' or 'error' for styling
- */
 function showResponse(html, type = 'info') {
   responseBox.innerHTML = html;
-  responseBox.className = 'response'; // Reset classes
-  if (type === 'success') {
-    responseBox.classList.add('success');
-  } else if (type === 'error') {
-    responseBox.classList.add('error');
-  }
+  responseBox.className = 'response';
+  if (type === 'success') responseBox.classList.add('success');
+  else if (type === 'error') responseBox.classList.add('error');
   responseBox.style.display = 'block';
-  
-  // FIXED: Smooth scroll to response for better UX
-  setTimeout(() => {
-    responseBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  }, 100);
+  setTimeout(()=> responseBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
 }
-
-/**
- * FIXED: Clear function now also hides response box
- */
-function clearInput(){ 
-  textarea.value = ''; 
-  responseBox.style.display = 'none'; 
-  responseBox.className = 'response'; // Reset styling
-}
+function clearInput(){ textarea.value = ''; responseBox.style.display = 'none'; responseBox.className = 'response'; }
 
 /* ---------- COPY ---------- */
-function copyText(text){ 
-  const decoded = text.replace(/\\'/g,"'").replace(/\\"/g,'"').replace(/\\\\/g,'\\'); 
+function copyText(text){
+  const decoded = text.replace(/\\'/g,"'").replace(/\\"/g,'"').replace(/\\\\/g,'\\');
   if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(decoded)
-      .then(() => {
-        // FIXED: Show copy confirmation in a subtle way (optional)
-        console.log('Copied to clipboard:', decoded);
-      })
-      .catch(err => {
-        console.error('Copy failed:', err);
-        prompt('Copy this text manually:', decoded);
-      });
-  } else {
-    // Fallback for older browsers
-    prompt('Copy this text:', decoded);
-  }
+    navigator.clipboard.writeText(decoded).catch(()=> prompt('Copy this text manually:', decoded));
+  } else prompt('Copy this text:', decoded);
 }
 
 /* ---------- RECOMMENDATIONS ---------- */
@@ -458,26 +921,20 @@ const cardsContainer = qs('#cards-container'), recLoader = qs('#recLoader');
 let lastFetched = [];
 
 async function fetchRecommendations(){
-  cardsContainer.innerHTML = ''; 
+  cardsContainer.innerHTML = '';
   recLoader.style.display = 'inline-block';
   try {
     const res = await fetch(`https://script.google.com/macros/s/${DEPLOYED_ID}/exec?token=${SECRET_TOKEN}`);
-    if (!res.ok) {
-      throw new Error(`Failed to fetch: ${res.status} ${res.statusText}`);
-    }
+    if (!res.ok) throw new Error(`Failed to fetch: ${res.status} ${res.statusText}`);
     const data = await res.json();
-    if(!data || data.success !== true) {
-      throw new Error(data?.error || 'Failed to fetch recommendations');
-    }
+    if(!data || data.success !== true) throw new Error(data?.error || 'Failed to fetch recommendations');
     const arr = Array.isArray(data.data) ? data.data : [];
     lastFetched = arr;
     renderCardsFromSheetArray(arr);
-  } catch(err){ 
+  } catch(err){
     console.error('Error fetching recommendations:', err);
-    cardsContainer.innerHTML = `<div class="muted" style="color:#ff4444">Error loading recommendations: ${escapeHtml(err.message)}</div>`;
-  } finally { 
-    recLoader.style.display = 'none'; 
-  }
+    cardsContainer.innerHTML = `<div class="muted" style="color:#ff4444">Error loading messages: ${escapeHtml(err.message || String(err))}</div>`;
+  } finally { recLoader.style.display = 'none'; }
 }
 
 function mapRowToItem(rowObj){
@@ -498,52 +955,140 @@ function mapRowToItem(rowObj){
   };
 }
 
-function renderCardsFromSheetArray(arr){
-  const items = arr.map(mapRowToItem).sort((a,b)=> new Date(b.timestamp)-new Date(a.timestamp));
-  if(items.length===0){ 
-    cardsContainer.innerHTML = '<div class="muted">No recommended projects yet.</div>'; 
-    return; 
+/* ---------- RENDERER ---------- */
+function renderCardsFromSheetArray(arr) {
+  const items = arr.map(mapRowToItem).sort((a,b)=> new Date(b.timestamp) - new Date(a.timestamp));
+  if (items.length === 0) {
+    cardsContainer.innerHTML = '<div class="muted" style="text-align:center; margin-top:20px;"><div style="font-size:24px;">📭</div>No messages yet. Try refreshing or submitting a new concern.</div>';
+    return;
   }
   cardsContainer.innerHTML = '';
+
   items.forEach(item=>{
     const projects = (safeText(item.suggestionsRaw) || '').split(' | ').map(s=>s.trim()).filter(Boolean);
-    const card = document.createElement('div'); 
-    card.className='card';
+    const isLong = item.message && item.message.length > 240;
+    const card = document.createElement('div'); card.className='card';
     card.innerHTML = `
       <div class="meta"><strong>${fmtDate(item.timestamp)}</strong> · <span class="muted">${escapeHtml(item.main)} › ${escapeHtml(item.sub)}</span></div>
-      <div><strong>Message:</strong> ${escapeHtml(item.message)}</div>
-      <div class="projects">${projects.map(p=>`<span class="pill" title="${escapeHtml(p)}">${escapeHtml(p)}</span>`).join('')}</div>
-      <div style="display:flex;gap:8px;margin-top:10px">
+      <div class="message-preview"><strong>Message:</strong>
+        <div class="msg-preview" aria-label="message preview">${escapeHtml(item.message || '')}</div>
+        ${isLong ? `<div style="margin-top:8px"><button class="btn ghost see-more-btn">See more…</button></div>` : ''}
       </div>
+      <div class="projects">${projects.map(p=>`<span class="pill" title="${escapeHtml(p)}">${escapeHtml(p)}</span>`).join('')}</div>
     `;
     cardsContainer.appendChild(card);
+
+    // pill copy
+    card.querySelectorAll('.pill').forEach(pill=>{
+      pill.addEventListener('click', ()=> {
+        navigator.clipboard.writeText(pill.textContent).catch(()=> prompt('Copy this text:', pill.textContent));
+        pill.style.background = 'rgba(0,210,255,0.12)';
+        setTimeout(()=> pill.style.background = '', 700);
+      });
+    });
+
+    // fallback truncation when clamp/wrapping can't prevent overflow (unbroken tokens)
+    (function fitPreview() {
+      const previewEl = card.querySelector('.msg-preview');
+      if (!previewEl) return;
+      const fullText = String(item.message || '');
+      previewEl.setAttribute('title', fullText);
+      previewEl.textContent = fullText;
+
+      // If it fits visually, nothing else to do (CSS clamp will hide extra)
+      if (previewEl.scrollHeight <= previewEl.clientHeight) return;
+
+      // Binary search for largest substring that fits
+      let lo = 0, hi = fullText.length, best = 0;
+      while (lo <= hi) {
+        const mid = Math.floor((lo + hi) / 2);
+        previewEl.textContent = fullText.slice(0, mid) + '...';
+        if (previewEl.scrollHeight <= previewEl.clientHeight) {
+          best = mid; lo = mid + 1;
+        } else {
+          hi = mid - 1;
+        }
+      }
+      previewEl.textContent = fullText.slice(0, best) + '...';
+    })();
+
+    // See more opens modal
+    const seeMoreBtn = card.querySelector('.see-more-btn');
+    if (seeMoreBtn) {
+      seeMoreBtn.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        openMessageModal(item, projects);
+      });
+    }
   });
 }
 
-function openDetails(message, main, sub, projects){
-  const txt = `Message: ${message}\nCategory: ${main} › ${sub}\nProjects: ${projects}`;
-  if(confirm(txt + '\n\nCopy projects to clipboard?')) {
-    const projectList = projects.replace(/ \| /g,'\n');
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(projectList).catch(err => {
-        prompt('Copy this text:', projectList);
-      });
-    } else {
-      prompt('Copy this text:', projectList);
-    }
-  }
+/* ---------- MESSAGE MODAL ---------- */
+function openMessageModal(item, projects) {
+  const modalBackdrop = document.getElementById('messageModalBackdrop');
+  const modalBody = document.getElementById('messageModalBody');
+  modalBody.innerHTML = `
+    <div style="margin-bottom:10px"><strong>${fmtDate(item.timestamp)}</strong></div>
+    <div class="muted" style="margin-bottom:10px">Category: <strong>${escapeHtml(item.main)}</strong> › <strong>${escapeHtml(item.sub)}</strong></div>
+    <div style="margin-bottom:12px"><strong>Message:</strong><pre style="white-space:pre-wrap;margin:6px 0;padding:10px;background:rgba(255,255,255,0.02);border-radius:8px;border:1px solid rgba(255,255,255,0.02);">${escapeHtml(item.message)}</pre></div>
+    <div><strong>Suggested Projects:</strong></div>
+    <div class="projects" style="margin-top:8px">${projects.map(p=>`<span class="pill">${escapeHtml(p)}</span>`).join('')}</div>
+  `;
+  modalBackdrop.classList.add('active');
+  modalBackdrop.setAttribute('aria-hidden','false');
+  document.body.style.overflow = 'hidden';
 }
+function closeMessageModal(){
+  const modalBackdrop = document.getElementById('messageModalBackdrop');
+  modalBackdrop.classList.remove('active');
+  modalBackdrop.setAttribute('aria-hidden','true');
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeMessageModal(); });
 
-/* ---------- FILTER ---------- */
-function filterCards(){ 
-  const q = qs('#search').value.trim().toLowerCase(); 
-  Array.from(cardsContainer.querySelectorAll('.card')).forEach(c=> {
+/* ---------- SORT / FILTER ---------- */
+function sortCards(){
+  const order = qs('#sortOrder') ? qs('#sortOrder').value : 'newest';
+  const cards = Array.from(cardsContainer.querySelectorAll('.card'));
+  cards.sort((a,b)=>{
+    const da = new Date(a.querySelector('.meta strong').textContent);
+    const db = new Date(b.querySelector('.meta strong').textContent);
+    return order==='newest' ? db - da : da - db;
+  });
+  cards.forEach(c=> cardsContainer.appendChild(c));
+}
+function filterCards(){
+  const searchEl = qs('#search');
+  if (!searchEl) return;
+  const q = searchEl.value.trim().toLowerCase();
+  Array.from(cardsContainer.querySelectorAll('.card')).forEach(c=>{
     c.style.display = c.textContent.toLowerCase().includes(q) ? 'block' : 'none';
   });
 }
 
+/* ---------- MOBILE NAV ---------- */
+document.addEventListener("DOMContentLoaded", () => {
+  const hamburger = document.querySelector(".hamburger");
+  const nav = document.querySelector(".nav-buttons");
+  if(!hamburger || !nav) return;
+  hamburger.setAttribute('aria-expanded','false');
+  hamburger.addEventListener("click", (e) => {
+    const expanded = nav.classList.toggle("active");
+    hamburger.setAttribute('aria-expanded', String(expanded));
+  });
+  nav.querySelectorAll(".nav-btn").forEach(btn=> btn.addEventListener("click", ()=> {
+    nav.classList.remove("active");
+    hamburger.setAttribute('aria-expanded','false');
+  }));
+  document.addEventListener('click', (e) => {
+    if (!nav.contains(e.target) && !hamburger.contains(e.target)) {
+      nav.classList.remove("active");
+      hamburger.setAttribute('aria-expanded','false');
+    }
+  });
+});
 
-/* ---------- IDEAS GENERATOR (client-side mapping) ---------- */
+/* ---------- IDEAS ---------- */
 const SUGGESTIONS_MAP = {
   "tmf-mf1":["Workbench Filing Improvement System","Ergonomic Tool Holder for Filing Station","Workpiece Angle Guide for Beginner Filing"],
   "tmf-mf2":["Lathe Tool Holder Organizer Fabrication","Coolant Collection & Management System","Turning Tool Geometry Training Aid"],
@@ -555,63 +1100,31 @@ const SUGGESTIONS_MAP = {
   "kaizenset-unknown":["Workplace Organization & 5S Implementation","Process Flow Optimization Study","Safety Signage & Visual Management System"],
   "uncategorized-unknown":["General Workstation Improvement Project","Safety and Efficiency Audit Project","Training Room Enhancement Proposal"]
 };
-
-function updateSubcategories(){ 
-  const main = qs('#main-category').value; 
-  const sub = qs('#sub-category'); 
-  sub.innerHTML = '<option value="">Choose Subcategory</option>'; 
-  if(main === 'TMF') {
-    ['MF1','MF2','TF','Welding'].forEach(s=> sub.append(new Option(s, s)));
-  } else if(main === 'EXE') {
-    ['XF','EF1','EF2'].forEach(s=> sub.append(new Option(s, s)));
-  } else if(main === 'Kaizenset') {
-    ['Unknown'].forEach(s=> sub.append(new Option(s, s)));
-  }
-  // Clear ideas container when main category changes
-  qs('#ideas-container').innerHTML = '';
+function updateSubcategories(){
+  const main = qs('#main-category').value; const sub = qs('#sub-category'); sub.innerHTML = '<option value="">Choose Subcategory</option>';
+  if(main==='TMF') ['MF1','MF2','TF','Welding'].forEach(s=> sub.append(new Option(s,s)));
+  else if(main==='EXE') ['XF','EF1','EF2'].forEach(s=> sub.append(new Option(s,s)));
+  else if(main==='Kaizenset') ['Unknown'].forEach(s=> sub.append(new Option(s,s)));
+  qs('#ideas-container').innerHTML='';
 }
-
-function generateIdeas(){ 
-  const main = qs('#main-category').value;
-  const sub = qs('#sub-category').value; 
-  const container = qs('#ideas-container'); 
-  container.innerHTML = ''; 
-  
-  if(!main || !sub) return; 
-  
+function generateIdeas(){
+  const main = qs('#main-category').value, sub = qs('#sub-category').value, container = qs('#ideas-container'); container.innerHTML='';
+  if(!main||!sub) return;
   const key = `${main.toLowerCase()}-${sub.toLowerCase()}`;
-  const ideas = SUGGESTIONS_MAP[key] || SUGGESTIONS_MAP['uncategorized-unknown']; 
-  
-  if (!ideas || ideas.length === 0) {
-    container.innerHTML = '<div class="muted">No suggestions available for this category.</div>';
-    return;
-  }
-  
-  ideas.forEach(i => { 
-    const div = document.createElement('div'); 
-    div.className = 'card'; 
-    div.style.marginBottom = '10px'; 
-    div.innerHTML = `
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
-        <div style="flex:1">${escapeHtml(i)}</div>
-        <button class="btn ghost" style="flex-shrink:0" onclick="copyText('${escapeForInline(i)}')">Copy</button>
-      </div>
-    `; 
-    container.appendChild(div); 
+  const ideas = SUGGESTIONS_MAP[key] || SUGGESTIONS_MAP['uncategorized-unknown'];
+  if(!ideas || ideas.length===0){ container.innerHTML = '<div class="muted">No suggestions available for this category.</div>'; return; }
+  ideas.forEach(i=>{
+    const div = document.createElement('div'); div.className='card'; div.style.marginBottom='10px';
+    div.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><div style="flex:1">${escapeHtml(i)}</div><button class="btn ghost" style="flex-shrink:0" onclick="copyText('${escapeForInline(i)}')">Copy</button></div>`;
+    container.appendChild(div);
   });
 }
 
-/* ---------- INITIAL LOAD ---------- */
+/* ---------- INITIAL ---------- */
 (async function init(){
-  // Ensure default visible section
   showSection('submit');
-  
-  // FIXED: Prefetch recommended in background without blocking UI
-  fetchRecommendations().catch(err => {
-    console.error('Initial fetch failed:', err);
-  });
+  fetchRecommendations().catch(err=> console.error('Initial fetch failed:', err));
 })();
-
 </script>
 </body>
 </html>
