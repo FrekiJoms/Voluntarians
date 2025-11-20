@@ -116,6 +116,24 @@ function buildPivotFromRaw(colName){
   });
   return Object.keys(counts).map(k=>({ label:k, count:counts[k] })).sort((a,b)=>b.count-a.count);
 }
+function appendSuggestionRow(payload) {
+  const ss = openSpreadsheet();
+  let sh = ss.getSheetByName("SUGG");
+  if (!sh) {
+    sh = ss.insertSheet("SUGG");
+    sh.appendRow(['TIMESTAMP', 'TITLE', 'DETAILS', 'MAIN-CATEGORY', 'SUB-CATEGORY', 'AUTHOR']);
+  }
+  // Ensure the order matches the headers
+  const row = [
+    new Date(),
+    payload.title,
+    payload.details,
+    payload.mainCategory,
+    payload.subCategory,
+    payload.author
+  ];
+  sh.appendRow(row);
+}
 
 // ----------------- SIMPLE CATEGORIZATION -----------------
 function categorize(text) {
@@ -365,11 +383,19 @@ function doPost(e){
       if(!parsed.ok) return jsonResponse({ success:false, error: "Invalid JSON" }, null);
       payload = parsed.value || {};
     }
-    // action handling (feedback)
+    // action handling (router)
     const action = (payload.action || '').toString();
     // token check (if set)
     if(SECRET_TOKEN){
       if(!payload.token || payload.token !== SECRET_TOKEN) return jsonResponse({ success:false, error:"Unauthorized" }, null);
+    }
+
+    if (action === 'submitSuggestion') {
+      if (!payload.title || !payload.details || !payload.mainCategory || !payload.subCategory) {
+        return jsonResponse({ success: false, error: "Missing required suggestion fields." });
+      }
+      appendSuggestionRow(payload);
+      return jsonResponse({ success: true, result: 'suggestion recorded' });
     }
 
     if(action === 'feedback'){
@@ -378,7 +404,7 @@ function doPost(e){
       return jsonResponse({ success:true, result: 'feedback recorded' }, null);
     }
 
-    // Normal submission
+    // Default Fallback: Normal submission
     const message = (payload.message || "").toString().trim();
     if(!message) return jsonResponse({ success:false, error: "No message provided" }, null);
 
@@ -399,6 +425,7 @@ function doPost(e){
     return jsonResponse({ success:false, error: err.toString() }, null);
   }
 }
+
 
 /**
  * doGet: reads RAW sheet
