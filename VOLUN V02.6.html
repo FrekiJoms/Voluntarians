@@ -2011,6 +2011,10 @@ function renderIdeaCards(ideas) {
                   </div>
                   <div class="card-actions">
                     <button class="btn" onclick="openIdeaDetailsModal('${idea.TIMESTAMP}')">View</button>
+                    <div class="mod-actions">
+                        <button class="mod-btn approve" onclick="approveIdea('${idea.TIMESTAMP}')">Approve</button>
+                        <button class="mod-btn delete" onclick="deleteIdea('${idea.TIMESTAMP}')">Delete</button>
+                    </div>
                   </div>
                 </div>
             `;
@@ -2292,6 +2296,23 @@ function closeModeratorLoginModal() {
     animateCloseModal(qs('#moderatorLoginModal'));
 }
 
+function deleteMessage(timestamp) {
+  if (!confirm(`Are you sure you want to permanently delete the message from ${timestamp}?`)) return;
+  console.log(`Requesting deletion for message: ${timestamp}`);
+  // TODO: Call backend to delete message
+}
+
+function approveIdea(timestamp) {
+  if (!confirm(`Are you sure you want to approve the idea from ${timestamp}?`)) return;
+  console.log(`Requesting approval for idea: ${timestamp}`);
+  // TODO: Call backend to approve idea
+}
+
+function deleteIdea(timestamp) {
+  if (!confirm(`Are you sure you want to permanently delete the idea from ${timestamp}?`)) return;
+  console.log(`Requesting deletion for idea: ${timestamp}`);
+  // TODO: Call backend to delete idea
+}
 
 function showModeratorLoginResponse(html, type) {
     const responseEl = qs('#moderatorLoginResponse');
