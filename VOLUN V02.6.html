@@ -5,6 +5,41 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>VOLUNTARIANS</title>
 <style>
+  
+  /* Suggestion and Moderator Form Styling */
+#suggestionModal select,
+#suggestionModal input[type="text"],
+#suggestionModal textarea,
+#moderatorLoginModal input[type="text"],
+#moderatorLoginModal input[type="password"] {
+  background: #0f1a20;
+  color: #e8fbff;
+  border: 1px solid rgba(0,210,255,0.12);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
+  box-shadow: inset 0 2px 12px rgba(0,0,0,0.55);
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  transition: box-shadow .14s ease, border-color .12s ease;
+  outline: none;
+  width: 100%;
+}
+
+#suggestionModal textarea {
+  resize: vertical;
+}
+
+#suggestionModal select:focus,
+#suggestionModal input[type="text"]:focus,
+#suggestionModal textarea:focus,
+#moderatorLoginModal input[type="text"]:focus,
+#moderatorLoginModal input[type="password"]:focus {
+  box-shadow: 0 8px 30px rgba(0,210,255,0.06);
+  border-color: var(--accent1);
+}
+
 /* Suggestion  Form Styling */
 #suggestionModal select,
 #suggestionModal input[type="text"],
@@ -860,6 +895,8 @@ body.modal-open { overflow:show; touch-action:none; }
     </div>
     <div class="muted" style="margin-top:8px">Tip: nandito naka lagay kung ano yung mostly requested.</div>
     <div class="analytics-cards" style="margin-top:12px">
+      
+   <!--MODALS AREA-->   
       <!-- Main Analytics card -->
       <div class="dashboard-card" data-key="main">
         <div class="card-body">
@@ -917,7 +954,7 @@ body.modal-open { overflow:show; touch-action:none; }
 </section>
 
 <!-- Idea Details Modal -->
-<div id="ideaDetailsModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
+<div id="ideaDetailsModal" key="idea-card" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
   <div class="modal-window" role="document" onclick="event.stopPropagation()">
     <div class="modal-header">
       <h3>💡 Idea Details</h3>
