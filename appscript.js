@@ -106,6 +106,22 @@ function readRawAsObjects(){
   }).reverse();
 }
 
+function readSuggAsObjects() {
+  const ss = openSpreadsheet();
+  const sh = ss.getSheetByName("SUGG");
+  if (!sh) return []; // Return empty if sheet doesn't exist yet
+  const last = sh.getLastRow();
+  const lastCol = sh.getLastColumn();
+  if (last < 2) return [];
+  const headers = sh.getRange(1, 1, 1, lastCol).getValues()[0];
+  const data = sh.getRange(2, 1, last - 1, lastCol).getValues();
+  return data.map(r => {
+    const obj = {};
+    headers.forEach((h, i) => obj[h] = r[i]);
+    return obj;
+  }).reverse(); // Show newest first
+}
+
 function buildPivotFromRaw(colName){
   const rows = readRawAsObjects();
   const col = colName || "SUB-CATEGORY";
@@ -441,9 +457,17 @@ function doGet(e){
   try{
     const p = e && e.parameter ? e.parameter : {};
     const callback = p.callback;
+    const action = p.action || ''; // Get the action parameter
+
     if(SECRET_TOKEN){
       if(!p.token || p.token !== SECRET_TOKEN) return jsonResponse({ success:false, error:"Unauthorized" }, callback);
     }
+    
+    if (action === 'getIdeas') {
+        const ideas = readSuggAsObjects();
+        return jsonResponse({ success: true, count: ideas.length, data: ideas }, callback);
+    }
+
     if(p.mode === "options"){
       return jsonResponse({ success:true, allowed:["GET","POST"], note:"Use callback for JSONP if calling cross-origin." }, callback);
     } 

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>VOLUNTARIANS</title>
 <style>
-/* Suggestion Modal Form Styling */
+/* Suggestion  Form Styling */
 #suggestionModal select,
 #suggestionModal input[type="text"],
 #suggestionModal textarea {
@@ -802,6 +802,19 @@ body.modal-open { overflow:show; touch-action:none; }
           </div>
         </section>
 
+    <!-- Ideas -->
+        <section id="idea" class="section">
+          <div class="content-wrap">
+            <h2>COMMUNITY IDEAS</h2>
+            <p class="muted">Browse suggestions submitted by the community.</p>
+            <div class="controls" style="margin-bottom:12px;">
+                <button class="btn ghost" onclick="fetchIdeas()">Refresh</button>
+            </div>
+            <div id="ideas-container" class="analytics-cards" aria-live="polite"></div>
+            <div id="ideasLoader" style="display:none;margin-top:10px"><span class="spinner"></span> Loading ideas...</div>
+          </div>
+        </section>
+
         <!-- suggestion -->
         <section id="suggestion" class="section">
           <div class="content-wrap">
@@ -888,6 +901,17 @@ body.modal-open { overflow:show; touch-action:none; }
   </div>
 </div>
 </section>
+
+<!-- Idea Details Modal -->
+<div id="ideaDetailsModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="modal-window" role="document" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3>💡 Idea Details</h3>
+      <button class="btn ghost" style="font-weight:bold;font-size:18px;line-height:1;" onclick="closeIdeaDetailsModal()">✕</button>
+    </div>
+    <div class="modal-body" id="ideaDetailsModalBody"></div>
+  </div>
+</div>
 
 <!-- questions modals -->
  <!-- Modal for questions -->
@@ -1184,6 +1208,9 @@ function handleNav(e){
   btn.classList.add('active');
   const target = btn.getAttribute('data-target');
   showSection(target);
+  if (target === 'idea') {
+    fetchIdeas(); // <-- ADD THIS LINE
+  }
 }
 function showSection(id){
   qsa('.section').forEach(s=>s.classList.remove('active'));
@@ -1762,6 +1789,90 @@ function updateSubcategories(){
   else if(main==='Other')['Cafeteria','Mass','General','Facilitation','Offsite','Anvil'].forEach(s=> sub.append(new Option(s,s)));
   qs('#suggestion-container').innerHTML='';
 }
+
+/* ---------- IDEAS SECTION ---------- */
+let lastFetchedIdeas = [];
+
+async function fetchIdeas() {
+  const container = qs('#ideas-container');
+  const loader = qs('#ideasLoader');
+  if (!container || !loader) return;
+
+  loader.style.display = 'block';
+  container.innerHTML = ''; // Clear previous cards
+
+  try {
+    const res = await fetch(`https://script.google.com/macros/s/${DEPLOYED_ID}/exec?action=getIdeas`);
+    if (!res.ok) throw new Error(`Failed to fetch ideas: ${res.status}`);
+
+    const data = await res.json();
+    if (data.success !== true) throw new Error(data.error || 'Server returned an error.');
+
+    lastFetchedIdeas = Array.isArray(data.data) ? data.data : [];
+    renderIdeaCards(lastFetchedIdeas);
+
+  } catch (err) {
+    console.error('Error fetching ideas:', err);
+    container.innerHTML = `<div class="muted" style="color:#ff4444">Error loading ideas: ${escapeHtml(err.message)}</div>`;
+  } finally {
+    loader.style.display = 'none';
+  }
+}
+
+function renderIdeaCards(ideas) {
+    const container = qs('#ideas-container');
+    if (!ideas || ideas.length === 0) {
+        container.innerHTML = '<div class="muted" style="text-align:center; margin-top:20px; width:100%;"><div style="font-size:24px;">🤔</div>No ideas have been submitted yet.</div>';
+        return;
+    }
+
+    container.innerHTML = ''; // Clear
+    ideas.forEach(idea => {
+        const card = document.createElement('div');
+        card.className = 'dashboard-card'; // Reuse existing card style
+        card.innerHTML = `
+            <div class="card-body">
+              <div>
+                <div class="card-heading">${escapeHtml(idea.TITLE || 'No Title')}</div>
+                <div class="card-sub muted">by ${escapeHtml(idea.AUTHOR || 'Anonymous')}</div>
+              </div>
+              <div class="card-actions">
+                <button class="btn" onclick="openIdeaDetailsModal('${idea.TIMESTAMP}')">View</button>
+              </div>
+            </div>
+        `;
+        container.appendChild(card);
+    });
+}
+
+function openIdeaDetailsModal(timestamp) {
+    const idea = lastFetchedIdeas.find(i => i.TIMESTAMP === timestamp);
+    if (!idea) {
+        alert('Could not find idea details.');
+        return;
+    }
+    const modal = qs('#ideaDetailsModal');
+    const body = qs('#ideaDetailsModalBody');
+    if (!modal || !body) return;
+
+    body.innerHTML = `
+        <div style="margin-bottom:10px"><strong>Submitted:</strong> ${fmtDate(idea.TIMESTAMP)}</div>
+        <div class="muted" style="margin-bottom:10px"><strong>Category:</strong> ${escapeHtml(idea['MAIN-CATEGORY'])} › ${escapeHtml(idea['SUB-CATEGORY'])}</div>
+        <div style="margin-bottom:12px"><strong>Title:</strong><div style="padding:6px 0; font-size: 1.1em; font-weight: 500;">${escapeHtml(idea.TITLE)}</div></div>
+        <div style="margin-bottom:12px"><strong>Details:</strong><pre style="white-space:pre-wrap;margin:6px 0;padding:10px;background:rgba(255,255,255,0.02);border-radius:8px;border:1px solid rgba(255,255,255,0.02);">${escapeHtml(idea.DETAILS)}</pre></div>
+        <div class="muted"><strong>Author:</strong> ${escapeHtml(idea.AUTHOR)}</div>
+    `;
+
+    modal.classList.add('active');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeIdeaDetailsModal() {
+    animateCloseModal(qs('#ideaDetailsModal'));
+}
+
+
 /* ---------- SUGGESTION MODAL ---------- */
 function handleSubcategoryChange(event) {
   const mainCategory = qs('#main-category').value;
