@@ -961,8 +961,7 @@ body.modal-open { overflow:show; touch-action:none; }
     </div>
     <div class="muted" style="margin-top:8px">Tip: nandito naka lagay kung ano yung mostly requested.</div>
     <div class="analytics-cards" style="margin-top:12px">
-      
-   <!--MODALS AREA-->   
+   
       <!-- Main Analytics card -->
       <div class="dashboard-card" data-key="main">
         <div class="card-body">
@@ -1018,6 +1017,26 @@ body.modal-open { overflow:show; touch-action:none; }
   </div>
 </div>
 </section>
+
+
+<!--MODALS AREA-->
+
+<!-- Moderator Action Confirmation Modal -->
+<div id="moderatorActionConfirmModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="modal-window" role="document" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3 id="moderatorActionConfirmTitle">Confirm Action</h3>
+      <button class="btn ghost" style="font-weight:bold;font-size:18px;line-height:1;" onclick="closeModeratorConfirmModal()">✕</button>
+    </div>
+    <div class="modal-body" style="padding:12px;">
+      <p id="moderatorActionConfirmMessage" class="muted">Are you sure you want to proceed with this action?</p>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+        <button class="btn ghost" onclick="closeModeratorConfirmModal()">Cancel</button>
+        <button id="moderatorActionConfirmBtn" class="btn">Confirm</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- Idea Details Modal -->
 <div id="ideaDetailsModal" key="idea-card" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
@@ -2273,9 +2292,46 @@ function showSuggestionResponse(html, type) {
   showSection('submit');
   fetchRecommendations().catch(err=> console.error('Initial fetch failed:', err));
 })();
+
 /* ---------- MODERATOR MODE ---------- */
-let activeModeratorId = null;
 let isModerator = false;
+let onConfirmCallback = null;
+
+// Opens the custom confirmation modal
+function openModeratorConfirmModal(title, message, onConfirm) {
+    const modal = qs('#moderatorActionConfirmModal');
+    if (!modal) return;
+    
+    qs('#moderatorActionConfirmTitle').textContent = title;
+    qs('#moderatorActionConfirmMessage').textContent = message;
+
+    // Store the action to perform if the user confirms
+    onConfirmCallback = onConfirm;
+
+    modal.classList.add('active');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+}
+
+// Closes the custom confirmation modal
+function closeModeratorConfirmModal() {
+    animateCloseModal(qs('#moderatorActionConfirmModal'));
+    onConfirmCallback = null; // Clear the callback
+}
+
+// This should be added to ensure the confirm button is wired up correctly
+document.addEventListener('DOMContentLoaded', () => {
+    const confirmBtn = qs('#moderatorActionConfirmBtn');
+    if (confirmBtn) {
+        confirmBtn.onclick = () => {
+            if (typeof onConfirmCallback === 'function') {
+                onConfirmCallback();
+            }
+            closeModeratorConfirmModal();
+        };
+    }
+});
+
 
 function openModeratorLoginModal(modId = '') {
     const modal = qs('#moderatorLoginModal');
@@ -2287,13 +2343,12 @@ function openModeratorLoginModal(modId = '') {
     const idInput = qs('#moderator-id');
     const passwordInput = qs('#moderator-password');
 
-    idInput.value = modId; // Pre-fill ID if provided by the /mod command
+    idInput.value = modId; 
 
     modal.classList.add('active');
     modal.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
 
-    // Smart focus: if ID is pre-filled, focus password. Otherwise, focus ID.
     if (modId) {
         setTimeout(() => passwordInput.focus(), 100);
     } else {
@@ -2315,23 +2370,6 @@ function closeModeratorLoginModal() {
     animateCloseModal(qs('#moderatorLoginModal'));
 }
 
-function deleteMessage(timestamp) {
-  if (!confirm(`Are you sure you want to permanently delete the message from ${timestamp}?`)) return;
-  console.log(`Requesting deletion for message: ${timestamp}`);
-  // TODO: Call backend to delete message
-}
-
-function approveIdea(timestamp) {
-  if (!confirm(`Are you sure you want to approve the idea from ${timestamp}?`)) return;
-  console.log(`Requesting approval for idea: ${timestamp}`);
-  // TODO: Call backend to approve idea
-}
-
-function deleteIdea(timestamp) {
-  if (!confirm(`Are you sure you want to permanently delete the idea from ${timestamp}?`)) return;
-  console.log(`Requesting deletion for idea: ${timestamp}`);
-  // TODO: Call backend to delete idea
-}
 
 function showModeratorLoginResponse(html, type) {
     const responseEl = qs('#moderatorLoginResponse');
@@ -2365,7 +2403,7 @@ async function verifyModeratorLogin(id, password) {
         // SUCCESS!
         isModerator = true;
         showModeratorLoginResponse('✓ Access Granted. Welcome, moderator.', 'success');
-        document.body.classList.add('moderator-mode'); // Activate moderator styles
+        document.body.classList.add('moderator-mode');
         setTimeout(closeModeratorLoginModal, 1000);
 
     } catch (err) {
@@ -2375,6 +2413,69 @@ async function verifyModeratorLogin(id, password) {
         loader.style.display = 'none';
         loginBtn.disabled = false;
     }
+}
+
+// Generic helper to perform a moderator action
+async function performModeratorAction(action, timestamp) {
+  if (!isModerator) {
+    console.error('Error: Moderator access required.');
+    // A better notification can be added here in the future
+    return null;
+  }
+
+  // This is where the call to the backend will go.
+  // For now, we'll just log it and pretend it succeeded.
+  console.log(`PERFORMING ACTION: ${action} on ${timestamp}`);
+  return { success: true }; // Simulate a successful backend response
+}
+
+function deleteMessage(timestamp) {
+  openModeratorConfirmModal(
+    'Delete Message',
+    'Are you sure you want to permanently delete this message?',
+    async () => {
+        const result = await performModeratorAction('deleteMessage', timestamp);
+        if (result) {
+            console.log('Message deleted successfully.');
+            const card = document.querySelector(`.card .meta strong[data-timestamp="${timestamp}"]`);
+            if (card) card.closest('.card').remove();
+        }
+    }
+  );
+}
+
+function approveIdea(timestamp) {
+  openModeratorConfirmModal(
+    'Approve Idea',
+    'Are you sure you want to approve this idea? This will mark it as "Approved" in the sheet.',
+    async () => {
+        const result = await performModeratorAction('approveIdea', timestamp);
+        if (result) {
+            console.log('Idea approved successfully.');
+            const button = document.querySelector(`.mod-btn.approve[onclick="approveIdea('${timestamp}')"]`);
+            if (button) {
+                button.textContent = '✓ Approved';
+                button.disabled = true;
+                button.style.backgroundColor = '#006400';
+            }
+        }
+    }
+  );
+}
+
+function deleteIdea(timestamp) {
+  openModeratorConfirmModal(
+    'Delete Idea',
+    'Are you sure you want to permanently delete this idea?',
+    async () => {
+        const result = await performModeratorAction('deleteIdea', timestamp);
+        if (result) {
+            console.log('Idea deleted successfully.');
+            const card = document.querySelector(`.dashboard-card[data-timestamp="${timestamp}"]`);
+            if (card) card.remove();
+        }
+    }
+  );
 }
 
 </script>
