@@ -1708,15 +1708,19 @@ function renderCardsFromSheetArray(arr) {
       const card = document.createElement('div');
       card.className = 'card';
       // put unhighlighted text in an element we can later transform for highlighting
-      card.innerHTML = `
-        <div class="meta"><strong>${fmtDate(item.timestamp)}</strong> · <span class="muted">${escapeHtml(item.main)} › ${escapeHtml(item.sub)}</span></div>
+           card.innerHTML = `
+        <div class="meta" style="display: flex; justify-content: space-between; align-items: center;">
+            <div><strong data-timestamp="${item.timestamp}">${fmtDate(item.timestamp)}</strong> · <span class="muted">${escapeHtml(item.main)} › ${escapeHtml(item.sub)}</span></div>
+            <div class="mod-actions">
+                <button class="mod-btn delete" onclick="deleteMessage('${item.timestamp}')">Delete</button>
+            </div>
+        </div>
         <div class="message-preview"><strong>Message:</strong>
           <div class="msg-preview" aria-label="message preview">${escapeHtml(item.message || '')}</div>
           ${isLong ? `<div style="margin-top:8px"><button class="btn ghost see-more-btn">See more…</button></div>` : ''}
         </div>
       `;
       cardsContainer.appendChild(card);
-
       // See more handler
       const seeMoreBtn = card.querySelector('.see-more-btn');
       if (seeMoreBtn) {
