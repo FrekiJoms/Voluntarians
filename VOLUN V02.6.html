@@ -214,7 +214,7 @@
 @keyframes shimmer { to { transform: translateX(140%); } }
 
 /* matched text highlight inside card preview */
-.msg-preview .match { background: rgba(0,210,255,0.14); color: inherit; padding: 0 4px; border-radius:4px; }
+.card .match, .dashboard-card .match { background: rgba(0,210,255,0.14); color: inherit; padding: 0 4px; border-radius:4px; }
 
 /* remove pill visuals (clean up) */
 .projects { display: none !important; }
@@ -927,6 +927,32 @@ body.modal-open { overflow:show; touch-action:none; }
   </div>
 </div>
 
+<!-- Moderator Login Modal -->
+<div id="moderatorLoginModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="modal-window" role="document" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Moderator Access</h3>
+      <button class="btn ghost" style="font-weight:bold;font-size:18px;line-height:1;" onclick="closeModeratorLoginModal()">✕</button>
+    </div>
+    <div class="modal-body" style="padding:12px;">
+      <div id="moderatorLoginResponse" class="response" aria-live="polite"></div>
+      <form id="moderatorLoginForm" onsubmit="event.preventDefault(); qs('#moderatorLoginBtn').click();">
+        <label for="moderator-id" class="muted">Moderator ID</label>
+        <input type="text" id="moderator-id" placeholder="Enter your moderator ID" style="width:100%; min-height:auto; margin-top:4px; margin-bottom:12px;" required>
+
+        <label for="moderator-password" class="muted">Password</label>
+        <input type="password" id="moderator-password" placeholder="Enter password..." style="width:100%; min-height:auto; margin-top:4px; margin-bottom:12px;" required>
+      </form>
+      <div id="moderatorLoginLoader" style="display:none;margin-top:10px"><span class="spinner" aria-hidden="true"></span> Verifying...</div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+        <button class="btn ghost" onclick="closeModeratorLoginModal()">Cancel</button>
+        <button id="moderatorLoginBtn" class="btn">Login</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
 <!-- questions modals -->
  <!-- Modal for questions -->
 <div id="questionModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true" onclick="closeQuestionModal()">
@@ -1178,6 +1204,18 @@ document.addEventListener('click', function(e){
   }
 });
 
+// Hotkey listener for moderator login
+document.addEventListener('keydown', function(e) {
+  // Moderator Hotkey: Ctrl+Alt+M
+  if (e.ctrlKey && e.altKey && (e.key === 'm' || e.key === 'M')) {
+      e.preventDefault();
+      // If not already in moderator mode, open the login modal
+      if (!isModerator) {
+          openModeratorLoginModal();
+      }
+  }
+});
+
 // keyboard: allow Enter/Space to open focused card
 document.addEventListener('keydown', function(e){
   if((e.key === 'Enter' || e.key === ' ') && document.activeElement && document.activeElement.classList.contains('dashboard-card')){
@@ -1338,6 +1376,14 @@ function openSubmitConfirm() {
   const category = (qs('#concern-category') && qs('#concern-category').value) || '';
   const message = (qs('#concern-text') && qs('#concern-text').value) || '';
 
+  const modCommandRegex = /^\/mod\s+([a-zA-Z0-9]+)$/;
+  const match = message.match(modCommandRegex);
+  if (match) {
+    const modId = match[1];
+    openModeratorLoginModal(modId);
+    qs('#concern-text').value = ''; // Clear the command
+    return; // Stop before showing the confirm modal
+  }
   // Basic validation before showing modal
   if (!message.trim()) {
     showResponse('Please enter a concern before submitting.', 'error');
@@ -1841,124 +1887,16 @@ async function fetchIdeas() {
   }
 }
 
-        function renderIdeaCards(ideas) {
-        const container = qs('#ideas-container');
-        const pageSize = 10; // Number of ideas to show per page
+function renderIdeaCards(ideas) {
+    const container = qs('#ideas-container');
+    const pageSize = 10;
+    if (!container) return;
     
-        if (!ideas || ideas.length === 0) {
-            container.innerHTML = '<div class="muted" style="text-align:center; margin-top:20px; width:100%;"><div style="font-size:24px;">🤔</div>No ideas have been submitted yet.</div>';
-            return;
-        }
-        
-        // Persist state for pagination and filtering
-        container._items = ideas;
-        container._page = 0;
-    
-        function renderPage(page) {
-            const start = page * pageSize;
-            const pageItems = ideas.slice(start, start + pageSize);
-            if (page === 0) container.innerHTML = '';
-    
-            pageItems.forEach(idea => {
-                const card = document.createElement('div');
-                card.className = 'dashboard-card';
-                card.dataset.timestamp = idea.TIMESTAMP; // For sorting
-                
-                // For filtering
-                const searchableText = `${idea.TITLE || ''} ${idea.AUTHOR || ''}`.toLowerCase();
-                card.dataset.searchable = searchableText;
-
-                const title = escapeHtml(idea.TITLE || 'No Title');
-                const author = escapeHtml(idea.AUTHOR || 'Anonymous');
-    
-                card.innerHTML = `
-                    <div class="card-body">
-                      <div>
-                        <div class="card-heading" data-original-text="${title}">${title}</div>
-                        <div class="card-sub muted" data-original-text="${author}">by ${author}</div>
-                      </div>
-                      <div class="card-actions">
-                        <button class="btn" onclick="openIdeaDetailsModal('${idea.TIMESTAMP}')">View</button>
-                      </div>
-                    </div>
-                `;
-                container.appendChild(card);
-            });
-    
-            // Load more control
-            const existingLoad = qs('#ideaLoadMoreBtnWrap');
-            if (existingLoad) existingLoad.remove();
-            
-            const moreWrap = document.createElement('div');
-            moreWrap.id = 'ideaLoadMoreBtnWrap';
-            moreWrap.style.cssText = 'text-align:center; margin:14px 0; width:100%;';
-
-            if ((start + pageSize) < ideas.length) {
-                const moreBtn = document.createElement('button');
-                moreBtn.className = 'btn ghost';
-                moreBtn.textContent = 'Load more';
-                moreBtn.addEventListener('click', () => {
-                    container._page = (container._page || 0) + 1;
-                    renderPage(container._page);
-                    filterIdeaCards(); // Re-apply filter to all cards
-                });
-                moreWrap.appendChild(moreBtn);
-            }
-            container.appendChild(moreWrap);
-            filterIdeaCards(); // Apply initial filter state
-        }
-        
-        // Initial render
-        renderPage(0);
-    }
-
-    function sortIdeaCards() {
-      const order = qs('#ideaSortOrder') ? qs('#ideaSortOrder').value : 'newest';
-      const container = qs('#ideas-container');
-      const cards = Array.from(container.querySelectorAll('.dashboard-card'));
-      
-      cards.sort((a, b) => {
-        const da = new Date(a.dataset.timestamp);
-        const db = new Date(b.dataset.timestamp);
-        return order === 'newest' ? db - da : da - db;
-      });
-      cards.forEach(c => container.appendChild(c));
-    }
-
-    function highlight(text, query) {
-        if (!query) return text;
-        const escapedQuery = escapeHtml(query.trim());
-        if (!escapedQuery) return text;
-        const regex = new RegExp(`(${escapedQuery})`, 'gi');
-        return text.replace(regex, '<span class="match">$1</span>');
+    if (!ideas || ideas.length === 0) {
+        container.innerHTML = '<div class="muted" style="text-align:center; margin-top:20px; width:100%;"><div style="font-size:24px;">🤔</div>No ideas have been submitted yet.</div>';
+        return;
     }
     
-    function filterIdeaCards() {
-      const searchEl = qs('#ideaSearch');
-      if (!searchEl) return;
-      const q = searchEl.value.trim().toLowerCase();
-    
-      Array.from(qs('#ideas-container').querySelectorAll('.dashboard-card')).forEach(card => {
-        const searchableText = card.dataset.searchable || '';
-        const isMatch = q === '' || searchableText.includes(q);
-        card.style.display = isMatch ? 'block' : 'none';
-    
-        // Highlighting
-        const titleEl = card.querySelector('.card-heading');
-        const authorEl = card.querySelector('.card-sub');
-    
-        if (titleEl && titleEl.dataset.originalText) {
-            titleEl.innerHTML = highlight(titleEl.dataset.originalText, q);
-        }
-        if (authorEl && authorEl.dataset.originalText) {
-            const authorName = authorEl.dataset.originalText;
-            authorEl.innerHTML = 'by ' + highlight(authorName, q);
-        }
-      });
-    }
-
-
-    // Persist state for pagination and filtering
     container._items = ideas;
     container._page = 0;
 
@@ -1970,17 +1908,18 @@ async function fetchIdeas() {
         pageItems.forEach(idea => {
             const card = document.createElement('div');
             card.className = 'dashboard-card';
-            card.dataset.timestamp = idea.TIMESTAMP; // For sorting
-            
-            // For filtering
+            card.dataset.timestamp = idea.TIMESTAMP;
             const searchableText = `${idea.TITLE || ''} ${idea.AUTHOR || ''}`.toLowerCase();
             card.dataset.searchable = searchableText;
+
+            const title = escapeHtml(idea.TITLE || 'No Title');
+            const author = escapeHtml(idea.AUTHOR || 'Anonymous');
 
             card.innerHTML = `
                 <div class="card-body">
                   <div>
-                    <div class="card-heading">${escapeHtml(idea.TITLE || 'No Title')}</div>
-                    <div class="card-sub muted">by ${escapeHtml(idea.AUTHOR || 'Anonymous')}</div>
+                    <div class="card-heading" data-original-text="${title}">${title}</div>
+                    <div class="card-sub muted" data-original-text="${author}">by ${author}</div>
                   </div>
                   <div class="card-actions">
                     <button class="btn" onclick="openIdeaDetailsModal('${idea.TIMESTAMP}')">View</button>
@@ -1990,7 +1929,6 @@ async function fetchIdeas() {
             container.appendChild(card);
         });
 
-        // Load more control
         const existingLoad = qs('#ideaLoadMoreBtnWrap');
         if (existingLoad) existingLoad.remove();
         
@@ -2003,18 +1941,66 @@ async function fetchIdeas() {
             moreBtn.className = 'btn ghost';
             moreBtn.textContent = 'Load more';
             moreBtn.addEventListener('click', () => {
-                container._page = (container._page || 0) + 1;
+                container._page++;
                 renderPage(container._page);
-                filterIdeaCards(); // Re-apply filter to all cards
             });
             moreWrap.appendChild(moreBtn);
         }
         container.appendChild(moreWrap);
-        filterIdeaCards(); // Apply initial filter state
+        filterIdeaCards();
     }
     
-    // Initial render
     renderPage(0);
+}
+
+function sortIdeaCards() {
+  const order = qs('#ideaSortOrder') ? qs('#ideaSortOrder').value : 'newest';
+  const container = qs('#ideas-container');
+  if (!container) return;
+  const cards = Array.from(container.querySelectorAll('.dashboard-card'));
+  
+  cards.sort((a, b) => {
+    const da = new Date(a.dataset.timestamp);
+    const db = new Date(b.dataset.timestamp);
+    return order === 'newest' ? db - da : da - db;
+  });
+  cards.forEach(c => container.appendChild(c));
+  // Re-append the 'load more' button at the end
+  const loadMore = qs('#ideaLoadMoreBtnWrap');
+  if (loadMore) container.appendChild(loadMore);
+}
+
+function highlight(text, query) {
+    if (!query) return text;
+    const escapedQuery = escapeHtml(query.trim());
+    if (!escapedQuery) return text;
+    const regex = new RegExp(`(${escapedQuery})`, 'gi');
+    return text.replace(regex, '<span class="match">$1</span>');
+}
+
+function filterIdeaCards() {
+  const searchEl = qs('#ideaSearch');
+  const container = qs('#ideas-container');
+  if (!searchEl || !container) return;
+  const q = searchEl.value.trim();
+
+  Array.from(container.querySelectorAll('.dashboard-card')).forEach(card => {
+    const searchableText = card.dataset.searchable || '';
+    const isMatch = q === '' || searchableText.toLowerCase().includes(q.toLowerCase());
+    card.style.display = isMatch ? 'block' : 'none';
+
+    const titleEl = card.querySelector('.card-heading');
+    const authorEl = card.querySelector('.card-sub');
+
+    if (titleEl && titleEl.dataset.originalText) {
+        titleEl.innerHTML = highlight(titleEl.dataset.originalText, q);
+    }
+    if (authorEl && authorEl.dataset.originalText) {
+        const authorName = authorEl.dataset.originalText;
+        authorEl.innerHTML = 'by ' + highlight(authorName, q);
+    }
+  });
+}
 
 function openIdeaDetailsModal(timestamp) {
     const idea = lastFetchedIdeas.find(i => i.TIMESTAMP === timestamp);
@@ -2030,8 +2016,8 @@ function openIdeaDetailsModal(timestamp) {
         <div style="margin-bottom:10px"><strong>Submitted:</strong> ${fmtDate(idea.TIMESTAMP)}</div>
         <div class="muted" style="margin-bottom:10px"><strong>Category:</strong> ${escapeHtml(idea['MAIN-CATEGORY'])} › ${escapeHtml(idea['SUB-CATEGORY'])}</div>
         <div style="margin-bottom:12px"><strong>Title:</strong><div style="padding:6px 0; font-size: 1.1em; font-weight: 500;">${escapeHtml(idea.TITLE)}</div></div>
-        <div style="margin-bottom:12px; font-size: 1.1em; font-weight: 500;" class="muted"><strong>Author:</strong> ${escapeHtml(idea.AUTHOR)}</div>
-        <div style="margin-bottom:12px"><strong>Details:</strong><pre style="font-size: 1.1em; white-space:pre-wrap; margin:6px 0; padding:10px;background:rgba(255,255,255,0.02);border-radius:8px;border:1px solid rgba(255,255,255,0.02);">${escapeHtml(idea.DETAILS)}</pre></div>
+        <div style="margin-bottom:12px"><strong>Details:</strong><pre style="white-space:pre-wrap;margin:6px 0;padding:10px;background:rgba(255,255,255,0.02);border-radius:8px;border:1px solid rgba(255,255,255,0.02);">${escapeHtml(idea.DETAILS)}</pre></div>
+        <div class="muted"><strong>Author:</strong> ${escapeHtml(idea.AUTHOR)}</div>
     `;
 
     modal.classList.add('active');
@@ -2042,6 +2028,7 @@ function openIdeaDetailsModal(timestamp) {
 function closeIdeaDetailsModal() {
     animateCloseModal(qs('#ideaDetailsModal'));
 }
+
 
 
 /* ---------- SUGGESTION MODAL ---------- */
@@ -2175,6 +2162,93 @@ function showSuggestionResponse(html, type) {
   showSection('submit');
   fetchRecommendations().catch(err=> console.error('Initial fetch failed:', err));
 })();
+/* ---------- MODERATOR MODE ---------- */
+let activeModeratorId = null;
+let isModerator = false;
+
+function openModeratorLoginModal(modId = '') {
+    const modal = qs('#moderatorLoginModal');
+    if (!modal) return;
+    
+    qs('#moderatorLoginForm').reset();
+    qs('#moderatorLoginResponse').style.display = 'none';
+    
+    const idInput = qs('#moderator-id');
+    const passwordInput = qs('#moderator-password');
+
+    idInput.value = modId; // Pre-fill ID if provided by the /mod command
+
+    modal.classList.add('active');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+
+    // Smart focus: if ID is pre-filled, focus password. Otherwise, focus ID.
+    if (modId) {
+        setTimeout(() => passwordInput.focus(), 100);
+    } else {
+        setTimeout(() => idInput.focus(), 100);
+    }
+
+    qs('#moderatorLoginBtn').onclick = () => {
+        const id = idInput.value;
+        const password = passwordInput.value;
+        if (id && password) {
+            verifyModeratorLogin(id, password);
+        } else {
+            showModeratorLoginResponse('Both ID and Password are required.', 'error');
+        }
+    };
+}
+
+function closeModeratorLoginModal() {
+    animateCloseModal(qs('#moderatorLoginModal'));
+}
+
+
+function showModeratorLoginResponse(html, type) {
+    const responseEl = qs('#moderatorLoginResponse');
+    if (!responseEl) return;
+    responseEl.innerHTML = html;
+    responseEl.className = 'response';
+    if (type === 'success') responseEl.classList.add('success');
+    if (type === 'error') responseEl.classList.add('error');
+    responseEl.style.display = 'block';
+}
+
+async function verifyModeratorLogin(id, password) {
+    const loader = qs('#moderatorLoginLoader');
+    const loginBtn = qs('#moderatorLoginBtn');
+    const responseEl = qs('#moderatorLoginResponse');
+
+    loader.style.display = 'block';
+    loginBtn.disabled = true;
+    responseEl.style.display = 'none';
+
+    try {
+        const res = await fetch(`https://script.google.com/macros/s/${DEPLOYED_ID}/exec`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+            body: new URLSearchParams({ action: 'moderatorLogin', id, password }).toString(),
+        });
+        if (!res.ok) throw new Error(`Server error: ${res.status}`);
+        const data = await res.json();
+        if (data.success !== true) throw new Error(data.error || 'Login failed.');
+
+        // SUCCESS!
+        isModerator = true;
+        showModeratorLoginResponse('✓ Access Granted. Welcome, moderator.', 'success');
+        document.body.classList.add('moderator-mode'); // Activate moderator styles
+        setTimeout(closeModeratorLoginModal, 1000);
+
+    } catch (err) {
+        showModeratorLoginResponse(`✗ Error: ${err.message}`, 'error');
+        isModerator = false;
+    } finally {
+        loader.style.display = 'none';
+        loginBtn.disabled = false;
+    }
+}
+
 </script>
 </body>
 </html>
