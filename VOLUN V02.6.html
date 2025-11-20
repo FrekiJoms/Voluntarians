@@ -1841,7 +1841,7 @@ async function fetchIdeas() {
   }
 }
 
-    function renderIdeaCards(ideas) {
+        function renderIdeaCards(ideas) {
         const container = qs('#ideas-container');
         const pageSize = 10; // Number of ideas to show per page
     
@@ -2015,7 +2015,7 @@ async function fetchIdeas() {
     
     // Initial render
     renderPage(0);
-    
+
 function openIdeaDetailsModal(timestamp) {
     const idea = lastFetchedIdeas.find(i => i.TIMESTAMP === timestamp);
     if (!idea) {
