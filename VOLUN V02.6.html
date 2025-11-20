@@ -5,7 +5,51 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>VOLUNTARIANS</title>
 <style>
-  
+
+/* Moderator Mode UI */
+#moderatorBanner {
+  display: none; /* Hidden by default */
+  background: linear-gradient(90deg, #ff8c00, #ff4500);
+  color: #fff;
+  text-align: center;
+  padding: 8px;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.moderator-mode #moderatorBanner {
+  display: block; /* Visible when moderator mode is active */
+}
+
+.mod-actions {
+    display: none; /* Hidden by default */
+    gap: 8px;
+    margin-left: 12px;
+}
+
+.moderator-mode .mod-actions {
+    display: flex; /* Show action buttons in moderator mode */
+}
+
+.mod-btn {
+    padding: 6px 10px;
+    font-size: 12px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.mod-btn.delete {
+    background-color: #9d2424;
+    color: white;
+}
+
+.mod-btn.approve {
+    background-color: #228b22;
+    color: white;
+}
+
   /* Suggestion and Moderator Form Styling */
 #suggestionModal select,
 #suggestionModal input[type="text"],
@@ -777,6 +821,9 @@ body.modal-open { overflow:show; touch-action:none; }
           <button class="nav-btn" data-target="dashboardPage" onclick="handleNav(event)">Analytics</button>
         </div>
       </div>
+
+      <!-- NEW MODERATOR BANNER -->
+      <div id="moderatorBanner">MODERATOR MODE ACTIVE</div>
 
         <!-- Submit page-->
       <!-- Main -->
