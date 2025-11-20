@@ -6,6 +6,25 @@
 <title>VOLUNTARIANS</title>
 <style>
 
+.mod-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.mod-btn.delete:hover {
+    box-shadow: 0 4px 14px rgba(157, 36, 36, 0.35);
+}
+
+.mod-btn.approve:hover {
+    box-shadow: 0 4px 14px rgba(34, 139, 34, 0.35);
+}
+
+/* Styles for the new confirmation modal */
+#moderatorActionConfirmModal .btn {
+    padding: 10px 18px;
+    border-radius: 12px;
+}
+
 /* Moderator Mode UI */
 #moderatorBanner {
   display: none; /* Hidden by default */
