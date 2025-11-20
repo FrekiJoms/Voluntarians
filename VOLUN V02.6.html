@@ -5,6 +5,51 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>VOLUNTARIANS</title>
 <style>
+/* Suggestion Modal Form Styling */
+#suggestionModal select,
+#suggestionModal input[type="text"],
+#suggestionModal textarea {
+  background: #0f1a20;
+  color: #e8fbff;
+  border: 1px solid rgba(0,210,255,0.12);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
+  box-shadow: inset 0 2px 12px rgba(0,0,0,0.55);
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  transition: box-shadow .14s ease, border-color .12s ease;
+  outline: none;
+}
+
+#suggestionModal input[type="text"],
+#suggestionModal textarea {
+  width: 100%;
+  resize: vertical;
+}
+
+#suggestionModal select:focus,
+#suggestionModal input[type="text"]:focus,
+#suggestionModal textarea:focus {
+  box-shadow: 0 8px 30px rgba(0,210,255,0.06);
+  border-color: var(--accent1);
+}
+
+/* Add a custom chevron for selects in the modal */
+#suggestionModal .row > div {
+    position: relative;
+}
+#suggestionModal .row > div::after {
+    content: '▾';
+    position: absolute;
+    right: 12px;
+    top: calc(50% + 8px); /* Adjust for label height */
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: var(--muted);
+    font-size: 16px;
+}
 
 /* questions style */
 /* Glass-style question buttons (default state) */
@@ -769,7 +814,7 @@ body.modal-open { overflow:show; touch-action:none; }
               <option value="Kaizenset">Kaizenset</option>
               <option value="Other">Others</option>
             </select>
-            <select id="sub-category" onchange="generatesuggestion()" aria-label="Subcategory">
+                <select id="sub-category" onchange="handleSubcategoryChange(event)" aria-label="Subcategory">
               <option value="">Choose Subcategory</option>
             </select>
             <div id="suggestion-container" class="suggestion" style="margin-top:14px"></div>
@@ -935,6 +980,44 @@ body.modal-open { overflow:show; touch-action:none; }
     <main class="card-modal-body">
       <iframe id="iframe-kaizenset" src="about:blank" frameborder="0" loading="lazy"></iframe>
     </main>
+  </div>
+</div>
+
+<!-- Suggestion Submission Modal -->
+<div id="suggestionModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="modal-window" role="document" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Submit a Suggestion</h3>
+      <button class="btn ghost" style="font-weight:bold;font-size:18px;line-height:1;" onclick="closeSuggestionModal()">✕</button>
+    </div>
+    <div class="modal-body" id="suggestionModalBody" style="padding:12px;">
+      <div id="suggestionResponse" class="response" aria-live="polite"></div>
+      <form id="suggestionForm">
+        <div class="row" style="margin-bottom:12px;">
+            <div style="flex:1">
+                <label for="suggestion-main-category" class="muted">Main Category</label>
+                <select id="suggestion-main-category" style="width:100%; margin-top:4px;"></select>
+            </div>
+            <div style="flex:1">
+                <label for="suggestion-sub-category" class="muted">Sub-Category</label>
+                <select id="suggestion-sub-category" style="width:100%; margin-top:4px;"></select>
+            </div>
+        </div>
+        <label for="suggestion-title" class="muted">Title</label>
+        <input type="text" id="suggestion-title" placeholder="A brief title for your suggestion" style="min-height:auto; margin-top:4px; margin-bottom:12px;" required>
+
+        <label for="suggestion-details" class="muted">Details</label>
+        <textarea id="suggestion-details" placeholder="Describe your suggestion in detail..." required style="margin-top:4px; margin-bottom:12px;"></textarea>
+
+        <label for="suggestion-author" class="muted">Author</label>
+        <input type="text" id="suggestion-author" placeholder="Your name (optional)" style="min-height:auto; margin-top:4px;">
+      </form>
+      <div id="suggestionLoader" style="display:none;margin-top:10px"><span class="spinner" aria-hidden="true"></span> Submitting...</div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+        <button class="btn ghost" onclick="closeSuggestionModal()">Cancel</button>
+        <button id="suggestionSendBtn" class="btn">Send Suggestion</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1671,19 +1754,6 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-/* ---------- suggestion ---------- */
-const SUGGESTIONS_MAP = {
-  "kaizenset-welding": ["Portable Welding Practice Station","Welding Fume Extraction Prototype","Adjustable Welding Fixture for Trainee Projects"],
-  "kaizenset-ict": ["Automated Data Entry & Validation Tool","Training Dashboard for Attendance and Scores","CSV to Sheets ETL Helper with Error Reporting"],
-  "kaizenset-mechatronics": ["Modular Robotic Arm Training Kit","Servo-based Pick-and-Place Trainer","Automated Conveyor with Sorting Sensors"],
-  "tmf-mf1": ["Workbench Filing Improvement System","Ergonomic Tool Holder for Filing Station","Workpiece Angle Guide for Beginner Filing"],
-  "tmf-mf2": ["Lathe Tool Holder Organizer Fabrication","Coolant Collection & Management System","Turning Tool Geometry Training Aid"],
-  "tmf-tf": ["Digital Measuring Tool Borrowing System","Tool Calibration Log Automation","3D-Printed Measuring Tool Organizer"],
-  "tmf-welding": ["Welding Rod Smart Storage Cabinet","Portable Welding Practice Table","Safety Shield & Spark Protection Project"],
-  "exe-xf": ["Electronics Component Organizer Drawer","Smart Inventory System for Electronics","Oscilloscope Probe Holder + Anti-tangle System"],
-  "exe-ef1": ["House Wiring Trainer Board Upgrade","Circuit Breaker Testing Panel Refurbish","Outlet + Lighting Practice Setup Box"],
-  "exe-ef2": ["Modular Motor Control Trainer Panel","Motor Starter Circuit Demonstration Board","Smart Fault Simulation System for Motor Control"],
-};
 function updateSubcategories(){
   const main = qs('#main-category').value; const sub = qs('#sub-category'); sub.innerHTML = '<option value="">Choose Subcategory</option>';
   if(main==='TMF') ['MF1','MF2','TF','Welding'].forEach(s=> sub.append(new Option(s,s)));
@@ -1692,17 +1762,128 @@ function updateSubcategories(){
   else if(main==='Other')['Cafeteria','Mass','General','Facilitation','Offsite','Anvil'].forEach(s=> sub.append(new Option(s,s)));
   qs('#suggestion-container').innerHTML='';
 }
-function generatesuggestion(){
-  const main = qs('#main-category').value, sub = qs('#sub-category').value, container = qs('#suggestion-container'); container.innerHTML='';
-  if(!main||!sub) return;
-  const key = `${main.toLowerCase()}-${sub.toLowerCase()}`;
-  const suggestion = SUGGESTIONS_MAP[key] || SUGGESTIONS_MAP['uncategorized-unknown'];
-  if(!suggestion || suggestion.length===0){ container.innerHTML = '<div class="muted">No suggestions available for this category.</div>'; return; }
-  suggestion.forEach(i=>{
-    const div = document.createElement('div'); div.className='card'; div.style.marginBottom='10px';
-    div.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><div style="flex:1">${escapeHtml(i)}</div>`;
-    container.appendChild(div);
-  });
+/* ---------- SUGGESTION MODAL ---------- */
+function handleSubcategoryChange(event) {
+  const mainCategory = qs('#main-category').value;
+  const subCategory = event.target.value;
+  if (mainCategory && subCategory) {
+    openSuggestionModal(mainCategory, subCategory);
+  }
+}
+
+function openSuggestionModal(mainCategory, subCategory) {
+  const modal = qs('#suggestionModal');
+  if (!modal) return;
+
+  // Reset form
+  qs('#suggestionForm').reset();
+  qs('#suggestionResponse').style.display = 'none';
+
+  // Populate categories
+  const mainSelect = qs('#suggestion-main-category');
+  const subSelect = qs('#suggestion-sub-category');
+
+  // Populate and set main category
+  mainSelect.innerHTML = qs('#main-category').innerHTML;
+  mainSelect.value = mainCategory;
+
+  // Logic to populate sub-categories based on main
+  const populateSubs = (mainCatValue) => {
+      subSelect.innerHTML = '<option value="">Choose Subcategory</option>';
+      const tempSubOptions = {
+          'TMF': ['MF1','MF2','TF','Welding'],
+          'EXE': ['XF','EF1','EF2'],
+          'Kaizenset': ['Welding', 'ICT','Mechatronics'],
+          'Other': ['Cafeteria','Mass','General','Facilitation','Offsite','Anvil']
+      };
+      if (tempSubOptions[mainCatValue]) {
+          tempSubOptions[mainCatValue].forEach(s => subSelect.append(new Option(s, s)));
+      }
+  };
+
+  populateSubs(mainCategory);
+  subSelect.value = subCategory;
+
+  // Update subcategories if main is changed inside the modal
+  mainSelect.onchange = () => populateSubs(mainSelect.value);
+
+  modal.classList.add('active');
+  modal.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+
+  // Wire up the send button to prevent multiple submissions
+  qs('#suggestionSendBtn').onclick = () => {
+      qs('#suggestionSendBtn').disabled = true;
+      submitSuggestion();
+  };
+}
+
+function closeSuggestionModal() {
+  const modal = qs('#suggestionModal');
+  if (modal) {
+    animateCloseModal(modal, qs('#sub-category'));
+    // Reset the main page dropdowns so user can re-select
+    qs('#main-category').value = '';
+    qs('#sub-category').innerHTML = '<option value="">Choose Subcategory</option>';
+  }
+}
+
+async function submitSuggestion() {
+  const loader = qs('#suggestionLoader');
+  const responseEl = qs('#suggestionResponse');
+  const sendBtn = qs('#suggestionSendBtn');
+
+  const payload = {
+    action: 'submitSuggestion',
+    title: qs('#suggestion-title').value.trim(),
+    details: qs('#suggestion-details').value.trim(),
+    mainCategory: qs('#suggestion-main-category').value,
+    subCategory: qs('#suggestion-sub-category').value,
+    author: qs('#suggestion-author').value.trim() || 'Anonymous'
+  };
+
+  // Validation
+  if (!payload.title || !payload.details || !payload.mainCategory || !payload.subCategory) {
+    showSuggestionResponse('Title, Details, and Categories are required.', 'error');
+    sendBtn.disabled = false; // re-enable button
+    return;
+  }
+
+  loader.style.display = 'block';
+  responseEl.style.display = 'none';
+
+  try {
+    const res = await fetch(`https://script.google.com/macros/s/${DEPLOYED_ID}/exec`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+      body: new URLSearchParams(payload).toString(),
+      redirect: 'follow'
+    });
+
+    if (!res.ok) throw new Error(`Server error: ${res.status}`);
+    const data = await res.json();
+    if (data.success !== true) throw new Error(data.error || 'Submission failed.');
+
+    showSuggestionResponse('✓ Suggestion submitted successfully!', 'success');
+    setTimeout(closeSuggestionModal, 1500);
+
+  } catch (err) {
+    console.error("Suggestion submission error:", err);
+    showSuggestionResponse(`✗ Error: ${err.message}`, 'error');
+  } finally {
+    loader.style.display = 'none';
+    sendBtn.disabled = false;
+  }
+}
+
+function showSuggestionResponse(html, type) {
+    const responseEl = qs('#suggestionResponse');
+    if (!responseEl) return;
+    responseEl.innerHTML = html;
+    responseEl.className = 'response'; // reset classes
+    if (type === 'success') responseEl.classList.add('success');
+    if (type === 'error') responseEl.classList.add('error');
+    responseEl.style.display = 'block';
 }
 
 /* ---------- INITIAL ---------- */
