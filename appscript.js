@@ -12,6 +12,14 @@ const SECRET_TOKEN = ""; // set "" to disable token check
 const REQUIRE_TOKEN = false;
 const SHEET_ID = "1qRoxHE7EWtbud7MlMZ56S5aFgb5yYGnrNzUi-CNKs50"; // your spreadsheet id
 
+// --- NEW: MODERATOR CONFIG ---
+// Add your moderators here. Make sure to use strong, unique passwords.
+const MODERATORS = [
+  { id: "097025freki", password: "YOUR_SECRET_PASSWORD" }
+  // { id: "another_mod_id", password: "another_secret_password" }
+];
+
+
 // Skillset mapping (main -> subs -> keywords)
 const SKILLSETS = [
   {
@@ -173,6 +181,26 @@ function suggestProject(main, sub) {
     if (k.startsWith(mainKey) && Array.isArray(SUGGESTIONS[k])) return SUGGESTIONS[k].slice(0,3);
   }
   return SUGGESTIONS["uncategorized-unknown"];
+}
+
+// --- NEW: MODERATOR LOGIN HANDLER ---
+function handleModeratorLogin(payload) {
+  const { id, password } = payload;
+  if (!id || !password) {
+    return jsonResponse({ success: false, error: "ID and password are required" });
+  }
+
+  const mod = MODERATORS.find(m => m.id === id);
+
+  if (!mod) {
+    return jsonResponse({ success: false, error: "Invalid ID or password" });
+  }
+
+  if (mod.password === password) {
+    return jsonResponse({ success: true, message: "Login successful" });
+  } else {
+    return jsonResponse({ success: false, error: "Invalid ID or password" });
+  }
 }
 
 // ----------------- TEXT & FUZZY HELPERS -----------------
@@ -401,9 +429,14 @@ function doPost(e){
     }
     // action handling (router)
     const action = (payload.action || '').toString();
+    
     // token check (if set)
     if(SECRET_TOKEN){
       if(!payload.token || payload.token !== SECRET_TOKEN) return jsonResponse({ success:false, error:"Unauthorized" }, null);
+    }
+
+    if (action === 'moderatorLogin') {
+      return handleModeratorLogin(payload);
     }
 
     if (action === 'submitSuggestion') {
