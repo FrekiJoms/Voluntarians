@@ -1592,23 +1592,27 @@ async function submitConcern() {
   if (respEl) respEl.style.display = 'none';
 
   try {
-    const form = new URLSearchParams();
-    form.append('message', message);
-    form.append('source', 'VOLUN');
-    if (category) form.append('category', category);
-    
-    // IMPORTANT: Add the action parameter so the backend knows what to do
-    form.append('action', 'submitConcern');
+    // This payload is sent as JSON
+    const payload = {
+      action: 'submitConcern',
+      message: message,
+      source: 'VOLUN_WEB',
+      category: category, // Include the user-selected category
+      extra: ''
+    };
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 12000); // 12-second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 12000);
 
     const res = await fetch(`https://script.google.com/macros/s/${DEPLOYED_ID}/exec`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
-      body: form.toString(),
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8', // Send as plain text to be parsed by Apps Script
+      },
+      body: JSON.stringify(payload),
       signal: controller.signal,
-      redirect: 'follow'
+      redirect: 'follow',
+      mode: 'cors' // Necessary for cross-origin POST requests to Google Apps Script
     });
 
     clearTimeout(timeoutId);
@@ -1623,22 +1627,20 @@ async function submitConcern() {
       throw new Error(data?.error || 'Server returned an unspecified error.');
     }
 
-    // Use the categorized response from the server
     const catMain = data.category?.main || 'Uncategorized';
     const catSub = data.category?.sub || 'Unknown';
 
     let html = `<div style="margin-bottom:10px"><strong style="color:#00ff88">✓ Concern Submitted Successfully!</strong></div>`;
-    html += `<div class="muted" style="margin-bottom:10px">Category: <strong>${escapeHtml(catMain)}</strong> › <strong>${escapeHtml(catSub)}</strong></div>`;
+    html += `<div class="muted" style="margin-bottom:10px">Auto-Category: <strong>${escapeHtml(catMain)}</strong> › <strong>${escapeHtml(catSub)}</strong></div>`;
 
     showResponse(html, 'success');
 
-    // Clear form fields
     if (ta) ta.value = '';
     if (categoryEl) categoryEl.value = '';
     const charCountEl = qs('#charCount');
     if (charCountEl) charCountEl.textContent = '0 / 1000';
 
-    // Refresh the message log in the background
+    // Refresh the message log
     fetchRecommendations().catch(err => console.error('Failed to refresh recommendations:', err));
 
   } catch (err) {
@@ -1652,6 +1654,7 @@ async function submitConcern() {
     if (submitLoaderEl) submitLoaderEl.style.display = 'none';
   }
 }
+
 
 
 /* ---------- COPY ---------- */
