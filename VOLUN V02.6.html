@@ -2302,17 +2302,17 @@ function showSuggestionResponse(html, type) {
 
 /* ---------- MODERATOR MODE ---------- */
 let isModerator = false;
+let moderatorToken = null; // Added to store the session token
 let onConfirmCallback = null;
 
 // Opens the custom confirmation modal
 function openModeratorConfirmModal(title, message, onConfirm) {
     const modal = qs('#moderatorActionConfirmModal');
     if (!modal) return;
-    
+
     qs('#moderatorActionConfirmTitle').textContent = title;
     qs('#moderatorActionConfirmMessage').textContent = message;
 
-    // Store the action to perform if the user confirms
     onConfirmCallback = onConfirm;
 
     modal.classList.add('active');
@@ -2343,14 +2343,14 @@ document.addEventListener('DOMContentLoaded', () => {
 function openModeratorLoginModal(modId = '') {
     const modal = qs('#moderatorLoginModal');
     if (!modal) return;
-    
+
     qs('#moderatorLoginForm').reset();
     qs('#moderatorLoginResponse').style.display = 'none';
-    
+
     const idInput = qs('#moderator-id');
     const passwordInput = qs('#moderator-password');
 
-    idInput.value = modId; 
+    idInput.value = modId;
 
     modal.classList.add('active');
     modal.setAttribute('aria-hidden', 'false');
@@ -2409,6 +2409,7 @@ async function verifyModeratorLogin(id, password) {
 
         // SUCCESS!
         isModerator = true;
+        moderatorToken = data.token; // Store the session token
         showModeratorLoginResponse('✓ Access Granted. Welcome, moderator.', 'success');
         document.body.classList.add('moderator-mode');
         setTimeout(closeModeratorLoginModal, 1000);
@@ -2416,6 +2417,7 @@ async function verifyModeratorLogin(id, password) {
     } catch (err) {
         showModeratorLoginResponse(`✗ Error: ${err.message}`, 'error');
         isModerator = false;
+        moderatorToken = null;
     } finally {
         loader.style.display = 'none';
         loginBtn.disabled = false;
@@ -2424,16 +2426,46 @@ async function verifyModeratorLogin(id, password) {
 
 // Generic helper to perform a moderator action
 async function performModeratorAction(action, timestamp) {
-  if (!isModerator) {
-    console.error('Error: Moderator access required.');
-    // A better notification can be added here in the future
+  if (!isModerator || !moderatorToken) {
+    console.error('Error: Moderator access required. Please log in again.');
+    openModeratorLoginModal();
+    showModeratorLoginResponse('Your session has expired. Please log in again.', 'error');
     return null;
   }
 
-  // This is where the call to the backend will go.
-  // For now, we'll just log it and pretend it succeeded.
-  console.log(`PERFORMING ACTION: ${action} on ${timestamp}`);
-  return { success: true }; // Simulate a successful backend response
+  try {
+    const res = await fetch(`https://script.google.com/macros/s/${DEPLOYED_ID}/exec`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+        body: new URLSearchParams({
+            action: action,
+            timestamp: timestamp,
+            token: moderatorToken
+        }).toString(),
+    });
+
+    if (!res.ok) throw new Error(`Server error: ${res.status}`);
+    const data = await res.json();
+
+    if (data.success !== true) {
+      if (data.error && data.error.toLowerCase().includes('session')) {
+        isModerator = false;
+        moderatorToken = null;
+        document.body.classList.remove('moderator-mode');
+        openModeratorLoginModal();
+        showModeratorLoginResponse('Your session has expired. Please log in again.', 'error');
+      }
+      throw new Error(data.error || `Action '${action}' failed.`);
+    }
+    
+    console.log(`Action ${action} successful:`, data.message);
+    return data; // Return successful response
+
+  } catch (err) {
+    console.error(`Moderator action failed: ${action}`, err);
+    alert(`Action failed: ${err.message}`);
+    return null;
+  }
 }
 
 function deleteMessage(timestamp) {
@@ -2442,10 +2474,14 @@ function deleteMessage(timestamp) {
     'Are you sure you want to permanently delete this message?',
     async () => {
         const result = await performModeratorAction('deleteMessage', timestamp);
-        if (result) {
+        if (result && result.success) {
             console.log('Message deleted successfully.');
             const card = document.querySelector(`.card .meta strong[data-timestamp="${timestamp}"]`);
-            if (card) card.closest('.card').remove();
+            if (card) {
+                card.closest('.card').style.transition = 'opacity 0.3s ease';
+                card.closest('.card').style.opacity = '0';
+                setTimeout(() => card.closest('.card').remove(), 300);
+            }
         }
     }
   );
@@ -2457,7 +2493,7 @@ function approveIdea(timestamp) {
     'Are you sure you want to approve this idea? This will mark it as "Approved" in the sheet.',
     async () => {
         const result = await performModeratorAction('approveIdea', timestamp);
-        if (result) {
+        if (result && result.success) {
             console.log('Idea approved successfully.');
             const button = document.querySelector(`.mod-btn.approve[onclick="approveIdea('${timestamp}')"]`);
             if (button) {
@@ -2476,14 +2512,19 @@ function deleteIdea(timestamp) {
     'Are you sure you want to permanently delete this idea?',
     async () => {
         const result = await performModeratorAction('deleteIdea', timestamp);
-        if (result) {
+        if (result && result.success) {
             console.log('Idea deleted successfully.');
             const card = document.querySelector(`.dashboard-card[data-timestamp="${timestamp}"]`);
-            if (card) card.remove();
+            if (card) {
+                card.style.transition = 'opacity 0.3s ease';
+                card.style.opacity = '0';
+                setTimeout(() => card.remove(), 300);
+            }
         }
     }
   );
 }
+
 
 </script>
 </body>
