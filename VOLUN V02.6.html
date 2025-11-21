@@ -1828,21 +1828,29 @@ function renderCardsFromSheetArray(arr) {
       const isLong = item.message && item.message.length > 240;
       const card = document.createElement('div');
       card.className = 'card';
-      // UPDATED: onclick now includes 'event'
+      
+      // -- CORRECTED HTML STRUCTURE --
+      // The .meta and .mod-actions are now wrapped in a .card-header
+      // for proper flexbox alignment on all screen sizes.
       card.innerHTML = `
-        <div class="meta" style="display: flex; justify-content: space-between; align-items: center;">
-            <div><strong data-timestamp="${item.timestamp}">${fmtDate(item.timestamp)}</strong> · <span class="muted">${escapeHtml(item.main)} › ${escapeHtml(item.sub)}</span></div>
-        </div>
-        <div class="message-preview"><strong>Message:</strong>
-          <div class="msg-preview" aria-label="message preview">${escapeHtml(item.message || '')}</div>
-          <div class="mod-actions">
+        <div class="card-header">
+            <div class="meta">
+                <strong data-timestamp="${item.timestamp}">${fmtDate(item.timestamp)}</strong> · <span class="muted">${escapeHtml(item.main)} › ${escapeHtml(item.sub)}</span>
+            </div>
+            <div class="mod-actions">
                 <button class="mod-btn delete" onclick="deleteMessage(event, '${item.timestamp}')">Delete</button>
             </div>
+        </div>
+        <div class="message-preview">
+          <strong>Message:</strong>
+          <div class="msg-preview" aria-label="message preview">${escapeHtml(item.message || '')}</div>
           ${isLong ? `<div style="margin-top:8px"><button class="btn ghost see-more-btn">See more…</button></div>` : ''}
         </div>
       `;
+      // -- END OF CORRECTION --
+
       cardsContainer.appendChild(card);
-      // See more handler
+      
       const seeMoreBtn = card.querySelector('.see-more-btn');
       if (seeMoreBtn) {
         seeMoreBtn.addEventListener('click', (e) => {
@@ -1851,7 +1859,6 @@ function renderCardsFromSheetArray(arr) {
         });
       }
 
-      // fallback truncation (same approach as before)
       (function fitPreview() {
         const previewEl = card.querySelector('.msg-preview');
         if (!previewEl) return;
@@ -1870,7 +1877,6 @@ function renderCardsFromSheetArray(arr) {
       })();
     });
 
-    // Load more control
     const existingLoad = qs('#loadMoreBtnWrap');
     if (existingLoad) existingLoad.remove();
     const moreWrap = document.createElement('div');
@@ -1894,6 +1900,7 @@ function renderCardsFromSheetArray(arr) {
 
   renderPage(0);
 }
+
 
 
 // 2) Provide safe stubs if showResponse or clearInput are not yet defined
