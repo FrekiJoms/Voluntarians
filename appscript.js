@@ -125,7 +125,7 @@ function handleApproveIdea(payload) {
     const { headers, sheet } = getSheetData('SUGG');
     const statusColIndex = headers.indexOf('STATUS');
     if (statusColIndex === -1) {
-       return jsonResponse({ success: false, error: 'STATUS': "column not found in SUGG sheet" return jsonResponse({ success: false, error: "'STATUS' column not found in SUGG sheet." });
+       return jsonResponse({ success: false, return jsonResponse({ success: false, error: "'STATUS' column not found in SUGG sheet." });
  });
     }
 
