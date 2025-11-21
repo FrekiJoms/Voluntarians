@@ -6,6 +6,35 @@
 <title>VOLUNTARIANS</title>
 <style>
 
+/* -- Final Responsive Fixes -- */
+
+/* 1. Community Ideas Card Actions */
+.card-actions {
+  flex-wrap: wrap; /* Allows buttons to wrap on small screens */
+  justify-content: flex-end; /* Aligns buttons to the right, even when wrapped */
+}
+
+/* 2. Message Log Card Header */
+.card .card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start; /* Align to top in case content wraps */
+  flex-wrap: wrap;
+  gap: 10px; /* Space between date and button if they wrap */
+  margin-bottom: 8px;
+}
+
+.card .meta {
+  flex-grow: 1; /* Allows date/category to take available space */
+  min-width: 200px; /* Prevents it from getting too squished before wrapping */
+  padding-top: 4px; /* Better vertical alignment with the button */
+}
+
+/* 3. General Moderator Actions */
+.mod-actions {
+  flex-shrink: 0; /* Prevents moderator buttons from shrinking */
+}
+
 /* -- Responsive Fixes for Cards and Buttons -- */
 @media (max-width: 600px) {
   /* Fixes layout for Community Idea cards */
