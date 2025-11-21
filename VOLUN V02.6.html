@@ -1631,7 +1631,7 @@ async function submitConcern() {
     const catSub = data.category?.sub || 'Unknown';
 
     let html = `<div style="margin-bottom:10px"><strong style="color:#00ff88">✓ Concern Submitted Successfully!</strong></div>`;
-    html += `<div class="muted" style="margin-bottom:10px">Auto-Category: <strong>${escapeHtml(catMain)}</strong> › <strong>${escapeHtml(catSub)}</strong></div>`;
+    html += `<div class="muted" style="margin-bottom:10px">Category: <strong>${escapeHtml(catMain)}</strong> › <strong>${escapeHtml(catSub)}</strong></div>`;
 
     showResponse(html, 'success');
 
@@ -2524,7 +2524,6 @@ function deleteIdea(timestamp) {
     }
   );
 }
-
 
 </script>
 </body>
