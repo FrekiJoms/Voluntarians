@@ -1832,12 +1832,12 @@ function renderCardsFromSheetArray(arr) {
       card.innerHTML = `
         <div class="meta" style="display: flex; justify-content: space-between; align-items: center;">
             <div><strong data-timestamp="${item.timestamp}">${fmtDate(item.timestamp)}</strong> · <span class="muted">${escapeHtml(item.main)} › ${escapeHtml(item.sub)}</span></div>
-            <div class="mod-actions">
-                <button class="mod-btn delete" onclick="deleteMessage(event, '${item.timestamp}')">Delete</button>
-            </div>
         </div>
         <div class="message-preview"><strong>Message:</strong>
           <div class="msg-preview" aria-label="message preview">${escapeHtml(item.message || '')}</div>
+          <div class="mod-actions">
+                <button class="mod-btn delete" onclick="deleteMessage(event, '${item.timestamp}')">Delete</button>
+            </div>
           ${isLong ? `<div style="margin-top:8px"><button class="btn ghost see-more-btn">See more…</button></div>` : ''}
         </div>
       `;
