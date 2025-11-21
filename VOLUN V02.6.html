@@ -2502,6 +2502,16 @@ function approveIdea(timestamp) {
                 button.disabled = true;
                 button.style.backgroundColor = '#006400';
             }
+            
+            // Find the card and apply the approved styles
+            const card = document.querySelector(`.dashboard-card[data-timestamp="${timestamp}"]`);
+            if (card) {
+                card.style.opacity = '0.6'; // Make the card semi-transparent
+                const titleEl = card.querySelector('.card-heading');
+                if (titleEl) {
+                    titleEl.style.textDecoration = 'line-through'; // Add a strikethrough to the title
+                }
+            }
         }
     }
   );
