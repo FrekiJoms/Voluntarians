@@ -1568,12 +1568,11 @@ function closeSubmitConfirm() {
 
 // submit (updated): category required, remove token from client, optimistic UI
 async function submitConcern() {
-  // query the DOM at call time to avoid "not defined" errors
   const ta = qs('#concern-text');
   const submitBtnEl = qs('#submitBtn');
   const submitLoaderEl = qs('#submitLoader');
   const respEl = qs('#response');
-  const categoryEl = qs('#concern-category'); // optional if you added category
+  const categoryEl = qs('#concern-category');
   const message = ta ? String(ta.value || '').trim() : '';
   const category = categoryEl ? String(categoryEl.value || '').trim() : '';
 
@@ -1597,11 +1596,12 @@ async function submitConcern() {
     form.append('message', message);
     form.append('source', 'VOLUN');
     if (category) form.append('category', category);
-    form.append('extra', '');
+    
+    // IMPORTANT: Add the action parameter so the backend knows what to do
+    form.append('action', 'submitConcern');
 
-    // 10s timeout for fetch
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const timeoutId = setTimeout(() => controller.abort(), 12000); // 12-second timeout
 
     const res = await fetch(`https://script.google.com/macros/s/${DEPLOYED_ID}/exec`, {
       method: 'POST',
@@ -1614,41 +1614,45 @@ async function submitConcern() {
     clearTimeout(timeoutId);
 
     if (!res.ok) {
-      if (res.status === 401 || res.status === 403) throw new Error('Unauthorized. Server rejected the request (401/403).');
-      throw new Error(`Server responded with status ${res.status}: ${res.statusText}`);
+      throw new Error(`Server responded with status ${res.status}`);
     }
 
     const data = await res.json().catch(() => { throw new Error('Invalid server response (not JSON).'); });
 
-    if (!data || data.success !== true) throw new Error(data?.error || data?.message || 'Server returned an error. Please try again.');
+    if (!data || data.success !== true) {
+      throw new Error(data?.error || 'Server returned an unspecified error.');
+    }
 
-    const catMain = (data.category && data.category.main) ? data.category.main : (category || 'Uncategorized');
-    const catSub = (data.category && data.category.sub) ? data.category.sub : (data.category && data.category.sub) ? data.category.sub : 'Unknown';
+    // Use the categorized response from the server
+    const catMain = data.category?.main || 'Uncategorized';
+    const catSub = data.category?.sub || 'Unknown';
 
     let html = `<div style="margin-bottom:10px"><strong style="color:#00ff88">✓ Concern Submitted Successfully!</strong></div>`;
     html += `<div class="muted" style="margin-bottom:10px">Category: <strong>${escapeHtml(catMain)}</strong> › <strong>${escapeHtml(catSub)}</strong></div>`;
 
     showResponse(html, 'success');
 
-    // clear form fields
+    // Clear form fields
     if (ta) ta.value = '';
     if (categoryEl) categoryEl.value = '';
     const charCountEl = qs('#charCount');
     if (charCountEl) charCountEl.textContent = '0 / 1000';
 
-    // refresh recommendations (non-blocking)
+    // Refresh the message log in the background
     fetchRecommendations().catch(err => console.error('Failed to refresh recommendations:', err));
+
   } catch (err) {
     console.error('Submission error:', err);
-    const isAbort = err && err.name === 'AbortError';
-    const friendly = isAbort ? 'Request timed out. Please try again.' : (err.message || 'An unexpected error occurred. Please try again.');
-    const errorMsg = `<strong style="color:#ff4444">✗ Submission Failed</strong><div style="margin-top:8px">${escapeHtml(friendly)}</div><div class="muted" style="margin-top:8px">If the problem persists, contact your administrator.</div>`;
+    const isAbort = err.name === 'AbortError';
+    const friendly = isAbort ? 'Request timed out. Please check your connection and try again.' : (err.message || 'An unexpected error occurred.');
+    const errorMsg = `<strong style="color:#ff4444">✗ Submission Failed</strong><div style="margin-top:8px">${escapeHtml(friendly)}</div>`;
     showResponse(errorMsg, 'error');
   } finally {
     if (submitBtnEl) submitBtnEl.disabled = false;
     if (submitLoaderEl) submitLoaderEl.style.display = 'none';
   }
 }
+
 
 /* ---------- COPY ---------- */
 function copyText(text){
