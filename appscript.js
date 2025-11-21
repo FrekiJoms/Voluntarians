@@ -110,7 +110,7 @@ function handleApproveIdea(payload) {
     const { headers, sheet } = getSheetData('SUGG');
     const statusColIndex = headers.indexOf('STATUS');
     if (statusColIndex === -1) {
-       return jsonResponse({ success: false, error: ''STATUS' column not found in SUGG sheet.' });
+       return jsonResponse({ success: false, error: "'STATUS' column not found in SUGG sheet." });
     }
     const row = findRowByTimestamp('SUGG', payload.timestamp);
     if (row === -1) return jsonResponse({ success: false, error: 'Idea not found.' });
