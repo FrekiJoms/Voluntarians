@@ -6,6 +6,43 @@
 <title>VOLUNTARIANS</title>
 <style>
 
+/* -- New Styles for Loading & Responsiveness -- */
+
+/* Tiny spinner for buttons */
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner-tiny {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.2);
+  border-top-color: #fff;
+  animation: spin .7s linear infinite;
+  display: inline-block;
+  vertical-align: middle;
+  margin: 0 4px;
+}
+
+/* Moderator button in loading state */
+.mod-btn.loading {
+  cursor: wait;
+  background-color: #555;
+  color: #ccc;
+}
+
+/* Responsive card layout for mobile */
+@media (max-width: 480px) {
+  .card-body {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .card-actions {
+    justify-content: flex-end; /* Aligns buttons to the right */
+    align-self: flex-end;   /* Ensures it aligns itself correctly in the column */
+  }
+}
+/* -- End of New Styles -- */
+
 .dashboard-card.approved {
   opacity: 0.6;
 }
@@ -1760,12 +1797,12 @@ function renderCardsFromSheetArray(arr) {
       const isLong = item.message && item.message.length > 240;
       const card = document.createElement('div');
       card.className = 'card';
-      // put unhighlighted text in an element we can later transform for highlighting
-           card.innerHTML = `
+      // UPDATED: onclick now includes 'event'
+      card.innerHTML = `
         <div class="meta" style="display: flex; justify-content: space-between; align-items: center;">
             <div><strong data-timestamp="${item.timestamp}">${fmtDate(item.timestamp)}</strong> · <span class="muted">${escapeHtml(item.main)} › ${escapeHtml(item.sub)}</span></div>
             <div class="mod-actions">
-                <button class="mod-btn delete" onclick="deleteMessage('${item.timestamp}')">Delete</button>
+                <button class="mod-btn delete" onclick="deleteMessage(event, '${item.timestamp}')">Delete</button>
             </div>
         </div>
         <div class="message-preview"><strong>Message:</strong>
@@ -1816,19 +1853,18 @@ function renderCardsFromSheetArray(arr) {
       moreBtn.addEventListener('click', () => {
         cardsContainer._page = (cardsContainer._page || 0) + 1;
         renderPage(cardsContainer._page);
-        // after rendering more pages, re-run filter/highlight to preserve current query
         applyFilterAndHighlight();
       });
       moreWrap.appendChild(moreBtn);
     }
     cardsContainer.appendChild(moreWrap);
-    // once page renders, apply current search filter/highlight to the newly added nodes
     applyFilterAndHighlight();
   }
 
-  // initial render
   renderPage(0);
 }
+
+
 // 2) Provide safe stubs if showResponse or clearInput are not yet defined
 window.showResponse = window.showResponse || function(html, type){
   const rb = document.getElementById('response');
@@ -2049,7 +2085,6 @@ function renderIdeaCards(ideas) {
         pageItems.forEach(idea => {
             const card = document.createElement('div');
             card.className = 'dashboard-card';
-            // Add the 'approved' class if the idea's status is "Approved"
             if (idea.STATUS === 'Approved') {
                 card.classList.add('approved');
             }
@@ -2065,6 +2100,7 @@ function renderIdeaCards(ideas) {
             const approveButtonText = isApproved ? '✓ Approved' : 'Approve';
             const approveButtonDisabled = isApproved ? 'disabled' : '';
 
+            // UPDATED: onclick attributes now include 'event'
             card.innerHTML = `
                 <div class="card-body">
                   <div>
@@ -2074,8 +2110,8 @@ function renderIdeaCards(ideas) {
                   <div class="card-actions">
                     <button class="btn" onclick="openIdeaDetailsModal('${idea.TIMESTAMP}')">View</button>
                     <div class="mod-actions">
-                        <button class="mod-btn approve" onclick="approveIdea('${idea.TIMESTAMP}')" ${approveButtonDisabled}>${approveButtonText}</button>
-                        <button class="mod-btn delete" onclick="deleteIdea('${idea.TIMESTAMP}')">Delete</button>
+                        <button class="mod-btn approve" onclick="approveIdea(event, '${idea.TIMESTAMP}')" ${approveButtonDisabled}>${approveButtonText}</button>
+                        <button class="mod-btn delete" onclick="deleteIdea(event, '${idea.TIMESTAMP}')">Delete</button>
                     </div>
                   </div>
                 </div>
@@ -2106,6 +2142,7 @@ function renderIdeaCards(ideas) {
     
     renderPage(0);
 }
+
 
 
 function sortIdeaCards() {
@@ -2487,51 +2524,111 @@ async function performModeratorAction(action, timestamp) {
   }
 }
 
-function deleteMessage(timestamp) {
+function deleteMessage(event, timestamp) {
+  const button = event.target;
   openModeratorConfirmModal(
     'Delete Message',
     'Are you sure you want to permanently delete this message?',
     async () => {
+      const originalText = button.innerHTML;
+      button.innerHTML = '<span class="spinner-tiny"></span>';
+      button.disabled = true;
+      button.classList.add('loading');
+
+      try {
         const result = await performModeratorAction('deleteMessage', timestamp);
         if (result && result.success) {
             console.log('Message deleted successfully.');
-            const card = document.querySelector(`.card .meta strong[data-timestamp="${timestamp}"]`);
+            const card = button.closest('.card');
             if (card) {
-                card.closest('.card').style.transition = 'opacity 0.3s ease';
-                card.closest('.card').style.opacity = '0';
-                setTimeout(() => card.closest('.card').remove(), 300);
+                card.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                card.style.opacity = '0';
+                card.style.transform = 'scale(0.95)';
+                setTimeout(() => card.remove(), 300);
             }
+        } else {
+          // Re-enable button on failure
+          button.innerHTML = originalText;
+          button.disabled = false;
+          button.classList.remove('loading');
         }
+      } catch (e) {
+          button.innerHTML = originalText;
+          button.disabled = false;
+          button.classList.remove('loading');
+      }
     }
   );
 }
 
-function approveIdea(timestamp) {
+function approveIdea(event, timestamp) {
+  const button = event.target;
   openModeratorConfirmModal(
     'Approve Idea',
     'Are you sure you want to approve this idea? This will mark it as "Approved" in the sheet.',
     async () => {
+      const originalText = button.innerHTML;
+      button.innerHTML = '<span class="spinner-tiny"></span>';
+      button.disabled = true;
+      button.classList.add('loading');
+
+      try {
         const result = await performModeratorAction('approveIdea', timestamp);
         if (result && result.success) {
             console.log('Idea approved successfully.');
-            
-            // Find the card and the button
-            const card = document.querySelector(`.dashboard-card[data-timestamp="${timestamp}"]`);
-            const button = card ? card.querySelector('.mod-btn.approve') : null;
-
-            // Update the UI
-            if (card) {
-                card.classList.add('approved');
-            }
-            if (button) {
-                button.textContent = '✓ Approved';
-                button.disabled = true;
-            }
+            const card = button.closest('.dashboard-card');
+            if (card) card.classList.add('approved');
+            button.innerHTML = '✓ Approved';
+            // Button remains disabled, no need to remove 'loading' or re-enable
+        } else {
+            button.innerHTML = originalText;
+            button.disabled = false;
+            button.classList.remove('loading');
         }
+      } catch (e) {
+            button.innerHTML = originalText;
+            button.disabled = false;
+            button.classList.remove('loading');
+      }
     }
   );
 }
 
+function deleteIdea(event, timestamp) {
+  const button = event.target;
+  openModeratorConfirmModal(
+    'Delete Idea',
+    'Are you sure you want to permanently delete this idea?',
+    async () => {
+      const originalText = button.innerHTML;
+      button.innerHTML = '<span class="spinner-tiny"></span>';
+      button.disabled = true;
+      button.classList.add('loading');
+
+      try {
+        const result = await performModeratorAction('deleteIdea', timestamp);
+        if (result && result.success) {
+            console.log('Idea deleted successfully.');
+            const card = button.closest('.dashboard-card');
+            if (card) {
+                card.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                card.style.opacity = '0';
+                card.style.transform = 'scale(0.95)';
+                setTimeout(() => card.remove(), 300);
+            }
+        } else {
+            button.innerHTML = originalText;
+            button.disabled = false;
+            button.classList.remove('loading');
+        }
+       } catch (e) {
+            button.innerHTML = originalText;
+            button.disabled = false;
+            button.classList.remove('loading');
+       }
+    }
+  );
+}
 
 function deleteIdea(timestamp) {
   openModeratorConfirmModal(
