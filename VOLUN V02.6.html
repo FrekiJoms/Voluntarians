@@ -6,6 +6,11 @@
 <title>VOLUNTARIANS</title>
 <style>
 
+/* -- Message Log Batch Controls -- */
+.card {
+    position: relative; /* This is crucial for positioning the checkbox */
+}
+
 /* -- Batch Action Controls -- */
 .batch-controls {
   display: none; /* Hidden by default */
@@ -25,19 +30,13 @@
 
 .card-checkbox {
   display: none;
-  position: absolute;
-  top: 12px;
-  left: 12px;
+  /* position: absolute; has been removed */
   transform: scale(1.4);
   accent-color: var(--accent1);
 }
 
 .moderator-mode .card-checkbox {
   display: block; /* Visible in moderator mode */
-}
-
-.moderator-mode .dashboard-card .card-body {
-  padding-left: 20px; /* Add space for the checkbox */
 }
 
 /* -- Final Responsive Fixes -- */
@@ -173,8 +172,8 @@
     display: flex; /* Show action buttons in moderator mode */
     flex-grow: 1; /* Allow it to grow */
     justify-content: flex-end; /* Push buttons to the right */
+    align-items: center; /* Vertically align the checkbox and button */
 }
-
 
 .mod-btn {
     padding: 6px 10px;
@@ -1025,6 +1024,16 @@ body.modal-open { overflow:show; touch-action:none; }
                 <button class="btn ghost" onclick="fetchRecommendations()">Refresh</button>
               </div>
             </div>
+            <!-- ADD THIS BLOCK for Message Log Batch Actions -->
+<div id="message-batch-controls" class="batch-controls">
+  <div style="display:flex; align-items:center; gap:8px;">
+    <input type="checkbox" id="message-select-all" onclick="toggleSelectAllMessages(this.checked)" style="transform: scale(1.4);">
+    <label for="message-select-all" class="muted">Select All</label>
+  </div>
+  <div style="flex-grow:1;"></div>
+  <button id="batch-delete-messages-btn" class="mod-btn delete" onclick="batchDeleteMessages()" disabled>Delete Selected</button>
+</div>
+<!-- END OF BLOCK TO ADD -->
             <div id="cards-container" aria-live="polite"></div>
             <div id="recLoader" style="display:none;margin-top:10px"><span class="spinner"></span> Loading...</div>
           </div>
@@ -1344,32 +1353,72 @@ body.modal-open { overflow:show; touch-action:none; }
 </div>
 
 <script>
-/* ---------- BATCH ACTIONS LOGIC ---------- */
-function updateBatchActionButtons() {
+  /* ---------- MESSAGE LOG BATCH ACTIONS ---------- */
+function updateMessageBatchButtons() {
+    const selected = qsa('.message-checkbox:checked');
+    const deleteBtn = qs('#batch-delete-messages-btn');
+    const selectAllCheckbox = qs('#message-select-all');
+
+    if (deleteBtn) deleteBtn.disabled = selected.length === 0;
+
+    const allVisibleCheckboxes = qsa('.card:not([style*="display: none"]) .message-checkbox');
+    if (selected.length > 0 && selected.length === allVisibleCheckboxes.length) {
+      if(selectAllCheckbox) selectAllCheckbox.checked = true;
+    } else {
+      if(selectAllCheckbox) selectAllCheckbox.checked = false;
+    }
+}
+
+function toggleSelectAllMessages(isChecked) {
+    qsa('.card:not([style*="display: none"]) .message-checkbox').forEach(cb => {
+        cb.checked = isChecked;
+    });
+    updateMessageBatchButtons();
+}
+
+function batchDeleteMessages() {
+    const timestamps = qsa('.message-checkbox:checked').map(cb => cb.value);
+    if (timestamps.length === 0) return;
+
+    openModeratorConfirmModal(
+        `Delete ${timestamps.length} Messages?`,
+        'Are you sure you want to permanently delete all selected messages?',
+        async () => {
+            console.log('BATCH DELETE MESSAGES: ', timestamps);
+            alert('Batch Delete for messages is being implemented. Timestamps logged to console.');
+            // The logic to call the backend will be added in our next step.
+        }
+    );
+}
+
+/* ---------- BATCH ACTIONS LOGIC (Corrected) ---------- */
+function updateIdeaBatchButtons() {
     const selected = qsa('.idea-checkbox:checked');
     const approveBtn = qs('#batch-approve-btn');
     const deleteBtn = qs('#batch-delete-btn');
     const selectAllCheckbox = qs('#idea-select-all');
 
+    // Enable or disable the batch action buttons
     if (approveBtn) approveBtn.disabled = selected.length === 0;
     if (deleteBtn) deleteBtn.disabled = selected.length === 0;
     
-    // Uncheck "Select All" if any individual box is unchecked
-    if (selected.length < qsa('.idea-checkbox').length) {
-      if (selectAllCheckbox) selectAllCheckbox.checked = false;
-    } else if (selected.length > 0) {
+    // Logic to correctly check or uncheck the "Select All" checkbox
+    // It should only consider cards that are currently visible
+    const allVisibleCheckboxes = qsa('.dashboard-card:not([style*="display: none"]) .idea-checkbox');
+    if (allVisibleCheckboxes.length > 0 && selected.length === allVisibleCheckboxes.length) {
       if (selectAllCheckbox) selectAllCheckbox.checked = true;
+    } else {
+      if (selectAllCheckbox) selectAllCheckbox.checked = false;
     }
 }
 
 function toggleSelectAllIdeas(isChecked) {
-    qsa('.idea-checkbox').forEach(cb => {
-        // Only change checkbox if its card is visible
-        if (cb.closest('.dashboard-card').style.display !== 'none') {
-            cb.checked = isChecked;
-        }
+    // Only select/deselect the checkboxes of cards that are currently visible
+    qsa('.dashboard-card:not([style*="display: none"]) .idea-checkbox').forEach(cb => {
+        cb.checked = isChecked;
     });
-    updateBatchActionButtons();
+    // Update the state of the buttons
+    updateIdeaBatchButtons();
 }
 
 function getSelectedTimestamps() {
@@ -1385,7 +1434,6 @@ function batchApproveIdeas() {
         'Are you sure you want to approve all selected ideas?',
         async () => {
             console.log('BATCH APPROVE: ', timestamps);
-            // We will add the backend call here in the next step.
             alert('Batch Approve functionality is being implemented. Timestamps are logged to the console.');
         }
     );
@@ -1400,7 +1448,6 @@ function batchDeleteIdeas() {
         'Are you sure you want to permanently delete all selected ideas?',
         async () => {
             console.log('BATCH DELETE: ', timestamps);
-            // We will add the backend call here in the next step.
             alert('Batch Delete functionality is being implemented. Timestamps are logged to the console.');
         }
     );
@@ -1949,22 +1996,23 @@ function renderCardsFromSheetArray(arr) {
       const isLong = item.message && item.message.length > 240;
       const card = document.createElement('div');
       card.className = 'card';
-      
-      // -- CORRECTED HTML STRUCTURE --
-      // The .meta and .mod-actions are now wrapped in a .card-header
-      // for proper flexbox alignment on all screen sizes.
+      card.dataset.timestamp = item.timestamp; // Add timestamp to card dataset
+
+      // -- CORRECTED HTML STRUCTURE AND CHECKBOX PLACEMENT --
       card.innerHTML = `
         <div class="card-header">
-            <div class="meta" style="margin-bottom:0px;">
+            <div class="meta" style="margin-bottom: 0px">
                 <strong data-timestamp="${item.timestamp}">${fmtDate(item.timestamp)}</strong> · <span class="muted">${escapeHtml(item.main)} › ${escapeHtml(item.sub)}</span>
             </div>
         </div>
-        <div class="message-preview" style="margin-top:0px;">
-          <strong>Message:</strong><div class="msg-preview" aria-label="message preview">${escapeHtml(item.message || '')}</div>
-          ${isLong ? `<div style="margin-top:8px"><button class="btn ghost see-more-btn">See more…</button></div>` : ''}
-      <div class="mod-actions">
+        <div class="message-preview" style="margin-top: 0px">
+          <strong>Message:</strong>
+          <div class="msg-preview" aria-label="message preview">${escapeHtml(item.message || '')}</div>
+          <div class="mod-actions">
+                <input type="checkbox" class="card-checkbox message-checkbox" value="${item.timestamp}" onchange="updateMessageBatchButtons()">
                 <button class="mod-btn delete" onclick="deleteMessage(event, '${item.timestamp}')">Delete</button>
             </div>
+          ${isLong ? `<div style="margin-top:8px"><button class="btn ghost see-more-btn">See more…</button></div>` : ''}
         </div>
       `;
       // -- END OF CORRECTION --
@@ -2020,8 +2068,6 @@ function renderCardsFromSheetArray(arr) {
 
   renderPage(0);
 }
-
-
 
 // 2) Provide safe stubs if showResponse or clearInput are not yet defined
 window.showResponse = window.showResponse || function(html, type){
@@ -2257,8 +2303,8 @@ function renderIdeaCards(ideas) {
             const approveButtonText = isApproved ? '✓ Approved' : 'Approve';
             const approveButtonDisabled = isApproved ? 'disabled' : '';
 
+            // -- CORRECTED HTML STRUCTURE AND CHECKBOX PLACEMENT --
             card.innerHTML = `
-                <input type="checkbox" class="card-checkbox idea-checkbox" value="${idea.TIMESTAMP}" onchange="updateBatchActionButtons()">
                 <div class="card-body">
                   <div>
                     <div class="card-heading" data-original-text="${title}">${title}</div>
@@ -2267,12 +2313,15 @@ function renderIdeaCards(ideas) {
                   <div class="card-actions">
                     <button class="btn" onclick="openIdeaDetailsModal('${idea.TIMESTAMP}')">View</button>
                     <div class="mod-actions">
+                        <input type="checkbox" class="card-checkbox idea-checkbox" value="${idea.TIMESTAMP}" onchange="updateIdeaBatchButtons()">
                         <button class="mod-btn approve" onclick="approveIdea(event, '${idea.TIMESTAMP}')" ${approveButtonDisabled}>${approveButtonText}</button>
                         <button class="mod-btn delete" onclick="deleteIdea(event, '${idea.TIMESTAMP}')">Delete</button>
                     </div>
                   </div>
                 </div>
             `;
+            // -- END OF CORRECTION --
+            
             container.appendChild(card);
         });
 
@@ -2299,6 +2348,7 @@ function renderIdeaCards(ideas) {
     
     renderPage(0);
 }
+
 function sortIdeaCards() {
   const order = qs('#ideaSortOrder') ? qs('#ideaSortOrder').value : 'newest';
   const container = qs('#ideas-container');
