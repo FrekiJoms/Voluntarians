@@ -1086,7 +1086,7 @@ body.modal-open { overflow:show; touch-action:none; }
   <div style="flex-grow:1;"></div>
   <!-- Add a wrapper div for the buttons -->
   <div class="batch-buttons-group">
-<button id="batch-approve-btn" class="mod-btn approve" onclick="batchApproveIdeas(event)" disabled>Approve Selected</button>
+<button id="batch-approve-btn" class="mod-btn approve" onclick="batchApproveIdeas(event)" disabled>Deliver Selected</button>
 <button id="batch-delete-btn" class="mod-btn delete" onclick="batchDeleteIdeas(event)" disabled>Delete Selected</button>
   </div>
 </div>
@@ -1424,7 +1424,7 @@ async function performModeratorBatchAction(action, timestamps, button) {
                 card.classList.add('approved');
                 const approveBtn = card.querySelector('.mod-btn.approve');
                 if (approveBtn) {
-                    approveBtn.innerHTML = '✓ Approved';
+                    approveBtn.innerHTML = '✓ Delivered';
                     approveBtn.disabled = true;
                 }
             }
@@ -1514,8 +1514,8 @@ function batchApproveIdeas(event) {
     if (timestamps.length === 0) return;
 
     openModeratorConfirmModal(
-        `Approve ${timestamps.length} Ideas?`,
-        'Are you sure you want to approve all selected ideas?',
+        `Deliver ${timestamps.length} Ideas?`,
+        'Are you sure you want to deliver all selected ideas?',
         () => performModeratorBatchAction('batchApproveIdeas', timestamps, event.target)
     );
 }
@@ -2378,7 +2378,7 @@ function renderIdeaCards(ideas) {
             const author = escapeHtml(idea.AUTHOR || 'Anonymous');
             
             const isApproved = idea.STATUS === 'Approved';
-            const approveButtonText = isApproved ? '✓ Approved' : 'Approve';
+            const approveButtonText = isApproved ? '✓ Delivered' : 'Deliver';
             const approveButtonDisabled = isApproved ? 'disabled' : '';
 
             // -- CORRECTED HTML STRUCTURE AND CHECKBOX PLACEMENT --
