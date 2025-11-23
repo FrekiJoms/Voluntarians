@@ -38,6 +38,33 @@ function jsonResponse(obj, callback){
 function tryParseJSON(str){
   try{ return {ok:true, value: JSON.parse(str)}; } catch(e){ return {ok:false, error: e.toString()}; }
 }
+/**
+ * Fetches the key performance indicators from the COUNT sheet.
+ * This reads the data directly from the cells you've set up.
+ */
+function getDashboardStats() {
+  try {
+    const sheet = openSpreadsheet().getSheetByName("COUNT");
+    if (!sheet) {
+      return jsonResponse({ success: false, error: "COUNT sheet not found." });
+    }
+    // Read the values from the second row (A2:E2) based on your screenshot
+    const values = sheet.getRange("A2:E2").getValues()[0];
+    
+    const stats = {
+      totalConcerns: values[0],
+      totalIdeas: values[1],
+      ideasDelivered: values[2],
+      mostActiveCategory: values[3],
+      mostActiveSubCategory: values[4]
+    };
+
+    return jsonResponse({ success: true, data: stats });
+  } catch (err) {
+    Logger.log('getDashboardStats Error: ' + err.toString());
+    return jsonResponse({ success: false, error: 'Failed to retrieve dashboard stats.' });
+  }
+}
 
 function getSheetData(sheetName) {
     const ss = openSpreadsheet();
@@ -470,22 +497,23 @@ function doPost(e) {
 
 
 function doGet(e){
-  try{
-    const p = e && e.parameter ? e.parameter : {};
-    const callback = p.callback;
-    const action = p.action || '';
+  try {
+    const p = e.parameter || {};
+    const action = p.action;
 
-    if (action === 'getIdeas') {
-        const ideas = readSuggAsObjects();
-        const filteredIdeas = ideas.filter(idea => idea.STATUS !== 'Archived');
-        return jsonResponse({ success: true, count: filteredIdeas.length, data: filteredIdeas }, callback);
+    // Route GET requests based on the 'action' parameter
+    switch (action) {
+      case 'getStats':
+        return getDashboardStats();
+      case 'getIdeas':
+        const ideas = getSheetData("SUGG").values.map(r => ({TIMESTAMP: r[0], TITLE: r[1], DETAILS: r[2], 'MAIN-CATEGORY': r[3], 'SUB-CATEGORY': r[4], AUTHOR: r[5], STATUS: r[6]})).reverse();
+        return jsonResponse({ success: true, data: ideas.filter(idea => idea.STATUS !== 'Archived') }, p.callback);
+      default:
+        // Default action is to get the concern logs
+        const rows = getSheetData("RAW").values.map(r => ({Timestamp: r[0], Message: r[1], Category: r[2], Main: r[3], Sub: r[4]})).reverse();
+        return jsonResponse({ success: true, data: p.limit ? rows.slice(0, parseInt(p.limit,10)) : rows }, p.callback);
     }
-    
-    let rows = readRawAsObjects();
-    if(p.limit) rows = rows.slice(0, parseInt(p.limit,10));
-    return jsonResponse({ success:true, count: rows.length, data: rows }, callback);
-
   } catch(err){
-    return jsonResponse({ success:false, error: err.toString() }, (e && e.parameter && e.parameter.callback) || null);
+    return jsonResponse({ success: false, error: err.toString() }, (e.parameter || {}).callback);
   }
 }

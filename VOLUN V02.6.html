@@ -1648,6 +1648,7 @@ function batchDeleteIdeas(event) {
 }
 
 let ideasHaveBeenFetched = false;
+let dashboardHasBeenFetched = false;
 
 /* ---------- CONFIG ---------- */
 const DEPLOYED_ID = 'AKfycbwwNGtFQYj2nvGBRC2eDXzknVX9FtlCIj7NOXc4N1zvxuvXFs_lTAAesmipL0TbsqwG';
@@ -1850,7 +1851,14 @@ function handleNav(e){
     fetchIdeas();
     ideasHaveBeenFetched = true;
   }
+  
+  // Fetch dashboard stats only on the first visit to the tab
+  if (target === 'dashboardPage' && !dashboardHasBeenFetched) {
+    fetchDashboardStats();
+    dashboardHasBeenFetched = true;
+  }
 }
+
 
 
 function showSection(id){
@@ -3111,6 +3119,47 @@ document.addEventListener('DOMContentLoaded', () => {
         if (activeCard) activeCard.classList.remove('active');
     });
 });
+/* ---------- DASHBOARD STATS FETCHER ---------- */
+async function fetchDashboardStats() {
+    // Target all the value elements
+    const statElements = {
+        totalConcerns: qs('#kpi-total-concerns'),
+        totalIdeas: qs('#kpi-total-ideas'),
+        ideasDelivered: qs('#kpi-ideas-delivered'),
+        activeCategory: qs('#kpi-active-category'),
+        activeSubcategory: qs('#kpi-active-subcategory')
+    };
+
+    // Set a loading state
+    Object.values(statElements).forEach(el => {
+        if (el) el.textContent = '...';
+    });
+
+    try {
+        // Fetch data using the 'getStats' action from your backend
+        const res = await fetch(`https://script.google.com/macros/s/${DEPLOYED_ID}/exec?action=getStats`);
+        if (!res.ok) throw new Error(`Server error: ${res.status}`);
+        
+        const data = await res.json();
+        if (data.success !== true) throw new Error(data.error || 'Failed to fetch stats.');
+
+        const stats = data.data;
+
+        // Populate the cards with the fetched data
+        if (statElements.totalConcerns) statElements.totalConcerns.textContent = stats.totalConcerns || '0';
+        if (statElements.totalIdeas) statElements.totalIdeas.textContent = stats.totalIdeas || '0';
+        if (statElements.ideasDelivered) statElements.ideasDelivered.textContent = stats.ideasDelivered || '0';
+        if (statElements.activeCategory) statElements.activeCategory.textContent = stats.mostActiveCategory || 'N/A';
+        if (statElements.activeSubcategory) statElements.activeSubcategory.textContent = stats.mostActiveSubCategory || 'N/A';
+
+    } catch (err) {
+        console.error('Failed to fetch dashboard stats:', err);
+        // Display an error state in the UI if the fetch fails
+        Object.values(statElements).forEach(el => {
+            if (el) el.textContent = 'Err';
+        });
+    }
+}
 
 </script>
 </body>
