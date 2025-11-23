@@ -288,6 +288,68 @@ function handleBatchApproveIdeas(payload) {
 
 
 // ----------------- DATA READING / WRITING -----------------
+/**
+ * Handles the submission of a new idea/suggestion from the suggestion modal.
+ * Appends the data to the "SUGG" sheet.
+ * @param {Object} e The event parameter from doPost, expected to have URL parameters.
+ * @returns {ContentService.TextOutput} JSON response.
+ */
+function handleSubmitSuggestion(e) {
+  try {
+    const payload = e.parameter;
+    const { title, details, mainCategory, subCategory } = payload;
+
+    if (!title || !details || !mainCategory || !subCategory) {
+      throw new Error('Title, Details, and Categories are required for suggestions.');
+    }
+    
+    // Use the existing helper function to append the row.
+    appendSuggestionRow(payload);
+
+    return jsonResponse({
+      success: true,
+      message: "Suggestion submitted successfully."
+    });
+
+  } catch (err) {
+    Logger.log('Submit Suggestion Error: ' + err.toString());
+    return jsonResponse({ success: false, error: err.toString() });
+  }
+}
+
+/**
+ * Handles the submission of a new concern from the main form.
+ * It categorizes the concern and appends it to the "RAW" sheet.
+ * @param {Object} e The event parameter from doPost.
+ * @returns {ContentService.TextOutput} JSON response.
+ */
+function handleSubmitConcern(e) {
+  try {
+    const payload = JSON.parse(e.postData.contents);
+    const message = payload.message || '';
+    const userCategory = payload.category || '';
+
+    if (!message.trim() || !userCategory.trim()) {
+      throw new Error('Message and category are required.');
+    }
+
+    const { main, sub } = categorize(message);
+
+    // Append to the 'RAW' sheet.
+    appendToRawRow([new Date(), message, userCategory, main, sub]);
+
+    // Return a success response including the categorization result
+    return jsonResponse({
+      success: true,
+      message: "Concern submitted successfully.",
+      category: { main: main, sub: sub }
+    });
+
+  } catch (err) {
+    Logger.log('Submit Concern Error: ' + err.toString());
+    return jsonResponse({ success: false, error: err.toString() });
+  }
+}
 
 function readRawAsObjects(){
   const { headers, values } = getSheetData("RAW");
