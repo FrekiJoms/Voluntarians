@@ -110,6 +110,21 @@
 .dashboard-card.approved .card-heading {
   text-decoration: line-through;
 }
+#exitModBtn {
+  display: none; /* Hide the exit button by default */
+  background: #9d2424; /* Make it red to stand out */
+  color: white;
+  border-color: rgba(255, 100, 100, 0.2);
+}
+
+.moderator-mode #exitModBtn {
+  display: inline-block; /* Show the button ONLY when in moderator mode */
+}
+
+#exitModBtn:hover {
+    background: #c73e3e !important;
+    color: white !important;
+}
 
 .mod-btn:hover {
     transform: translateY(-2px);
@@ -943,11 +958,12 @@ body.modal-open { overflow:show; touch-action:none; }
           <button class="nav-btn" data-target="suggestion" onclick="handleNav(event)">Suggestions</button>
           <button class="nav-btn" data-target="idea" onclick="handleNav(event)">Ideas</button>
           <button class="nav-btn" data-target="dashboardPage" onclick="handleNav(event)">Analytics</button>
+          <button id="exitModBtn" class="nav-btn" onclick="exitModeratorMode()">Exit</button>
         </div>
       </div>
 
       <!-- NEW MODERATOR BANNER -->
-      <div id="moderatorBanner">MODERATOR MODE ACTIVE</div>
+      <div id="moderatorBanner">MODERATOR MODE</div>
 
         <!-- Submit page-->
       <!-- Main -->
@@ -2696,7 +2712,23 @@ function deleteIdea(event, timestamp) {
     }
   );
 }
-
+function exitModeratorMode() {
+  isModerator = false;
+  moderatorToken = null;
+  document.body.classList.remove('moderator-mode');
+  
+  // Optional: Show a brief confirmation message
+  const exitBanner = document.createElement('div');
+  exitBanner.textContent = 'You have exited moderator mode.';
+  exitBanner.style.cssText = 'position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background-color: #228b22; color: white; padding: 12px 24px; border-radius: 10px; z-index: 9999; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.2);';
+  document.body.appendChild(exitBanner);
+  
+  setTimeout(() => {
+    exitBanner.style.transition = 'opacity 0.5s ease';
+    exitBanner.style.opacity = '0';
+    setTimeout(() => exitBanner.remove(), 500);
+  }, 2500);
+}
 function deleteIdea(timestamp) {
   openModeratorConfirmModal(
     'Delete Idea',
