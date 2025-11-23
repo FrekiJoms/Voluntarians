@@ -250,56 +250,49 @@ function categorize(text) { const t = (text || "").toLowerCase(); for (const gro
 
 // ----------------- MAIN WEBHOOKS (doPost, doGet) -----------------
 
+/**
+ * Main entry point for all POST requests from the web app.
+ * It routes actions to the appropriate handler.
+ */
 function doPost(e) {
   try {
-    let payload;
-    // The frontend sends data in multiple formats, so we handle both.
-    try {
-        if (e.postData.type === 'application/json') {
-            payload = JSON.parse(e.postData.contents);
-        } else {
-            payload = e.parameter;
-        }
-    } catch (parseError) {
-        // Fallback for plain text JSON string
-        payload = JSON.parse(e.postData.contents);
-    }
-    
+    // Robustly parse the payload from either URL parameters or post body.
+    const payload = (e.parameter && e.parameter.action) ? e.parameter : JSON.parse(e.postData.contents);
     const action = payload.action;
 
     // --- Public Actions (No Token Required) ---
-    if (action === 'submitConcern') {
-      return handleSubmitConcern(e); // Assumes you have this function
-    }
-    if (action === 'submitSuggestion') {
-      return handleSubmitSuggestion(e); // Assumes you have this function
-    }
-    if (action === 'moderatorLogin') {
-      return handleModeratorLogin(e); // Assumes you have this function
+    switch (action) {
+      case 'submitConcern':
+        // These handlers from your original script may expect the raw 'e' object.
+        return handleSubmitConcern(e);
+      case 'submitSuggestion':
+        return handleSubmitSuggestion(e);
+      case 'moderatorLogin':
+        return handleModeratorLogin(payload); // Pass the parsed payload.
     }
 
-    // --- Moderator-Only Actions (Token Required) ---
-    const token = payload.token;
-    if (!verifyModeratorToken(token)) {
-      return ContentService.createTextOutput(JSON.stringify({ success: false, error: 'Invalid or expired session token.' })).setMimeType(ContentService.MimeType.JSON);
+    // --- Moderator-Only Actions (Token Required from here on) ---
+    const tokenVerification = verifyModeratorToken(payload.token);
+    if (!tokenVerification.verified) {
+      return jsonResponse({ success: false, error: 'Invalid or expired session token.' });
     }
-    
-    // Actions below this point are protected
+
+    // Actions below this point are protected.
     switch (action) {
       case 'deleteMessage':
-        return handleDeleteMessage(e); // Assumes you have this function
+        return handleDeleteMessage(payload);
       case 'approveIdea':
-        return handleApproveIdea(e); // Assumes you have this function
+        return handleApproveIdea(payload);
       case 'deleteIdea':
-        return handleDeleteIdea(e); // Assumes you have this function
+        return handleDeleteIdea(payload);
       
-      // --- NEW BATCH ACTIONS ---
+      // --- BATCH ACTIONS ---
       case 'batchDeleteMessages':
-        return handleBatchDelete(e, 'Submissions');
+        return handleBatchDelete(payload, 'RAW'); // Corrected to use 'RAW' sheet
       case 'batchDeleteIdeas':
-        return handleBatchDelete(e, 'Ideas');
+        return handleBatchDelete(payload, 'SUGG'); // Corrected to use 'SUGG' sheet
       case 'batchApproveIdeas':
-        return handleBatchApproveIdeas(e);
+        return handleBatchApproveIdeas(payload);
 
       default:
         throw new Error('Invalid or unknown moderator action specified.');
@@ -307,7 +300,7 @@ function doPost(e) {
 
   } catch (err) {
     Logger.log('doPost Error: ' + err.toString() + ' Stack: ' + err.stack);
-    return ContentService.createTextOutput(JSON.stringify({ success: false, error: 'An error occurred in doPost: ' + err.toString() })).setMimeType(ContentService.MimeType.JSON);
+    return jsonResponse({ success: false, error: 'An error occurred in doPost: ' + err.toString() });
   }
 }
 
