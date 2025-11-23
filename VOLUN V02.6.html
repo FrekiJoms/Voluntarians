@@ -35,37 +35,6 @@
   flex-shrink: 0; /* Prevents moderator buttons from shrinking */
 }
 
-/* -- Responsive Fixes for Cards and Buttons -- */
-@media (max-width: 600px) {
-  /* Fixes layout for Community Idea cards */
-  .dashboard-card .card-body {
-    flex-direction: column;
-    align-items: stretch; /* Make items take full width */
-    gap: 12px;
-  }
-
-  .dashboard-card .card-actions {
-    align-self: flex-end; /* Align the button group to the right */
-  }
-
-  /* Fixes layout for Message Log cards */
-  .card .meta {
-    flex-wrap: wrap; /* Allow items to wrap */
-    gap: 10px;       /* Add space between wrapped items */
-  }
-
-  .card .meta .mod-actions {
-    flex-basis: 100%;        /* Make the button container take the full width */
-    display: flex;
-    justify-content: flex-end; /* Align the delete button to the right */
-  }
-  
-  /* Prevents moderator buttons from breaking text */
-  .mod-btn {
-    white-space: nowrap; /* Keep button text on one line */
-  }
-}
-
 /* -- New Styles for Loading & Responsiveness -- */
 
 /* Tiny spinner for buttons */
@@ -168,7 +137,10 @@
 
 .moderator-mode .mod-actions {
     display: flex; /* Show action buttons in moderator mode */
+    flex-grow: 1; /* Allow it to grow */
+    justify-content: flex-end; /* Push buttons to the right */
 }
+
 
 .mod-btn {
     padding: 6px 10px;
