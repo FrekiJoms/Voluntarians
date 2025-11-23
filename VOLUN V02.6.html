@@ -5,6 +5,36 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>VOLUNTARIANS</title>
 <style>
+/* -- Password Visibility Toggle -- */
+.password-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-top: 4px;
+  margin-bottom: 12px;
+}
+/* Ensure the input inside the wrapper takes full width */
+.password-wrap input {
+  width: 100%;
+  min-height: auto;
+  /* Add padding to the right to make space for the icon */
+  padding-right: 45px !important;
+}
+.password-toggle-icon {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 20px;
+  user-select: none; /* Prevents selecting the icon text */
+  transition: color .12s ease, transform .12s ease;
+}
+.password-toggle-icon:hover {
+  color: var(--accent1);
+  transform: translateY(-50%) scale(1.1);
+}
 
 /* -- Batch Action Button Grouping -- */
 .batch-buttons-group {
@@ -1229,7 +1259,10 @@ body.modal-open { overflow:show; touch-action:none; }
         <input type="text" id="moderator-id" placeholder="Enter your moderator ID" style="width:100%; min-height:auto; margin-top:4px; margin-bottom:12px;" required>
 
         <label for="moderator-password" class="muted">Password</label>
-        <input type="password" id="moderator-password" placeholder="Enter password..." style="width:100%; min-height:auto; margin-top:4px; margin-bottom:12px;" required>
+<div class="password-wrap">
+  <input type="password" id="moderator-password" placeholder="Enter password..." required>
+  <span class="password-toggle-icon" onclick="togglePasswordVisibility(this)">👁️</span>
+</div>
       </form>
       <div id="moderatorLoginLoader" style="display:none;margin-top:10px"><span class="spinner" aria-hidden="true"></span> Verifying...</div>
       <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
@@ -2947,7 +2980,6 @@ function deleteIdea(event, timestamp) {
     }
   );
 }
-
 function exitModeratorMode() {
   isModerator = false;
   moderatorToken = null;
@@ -2965,6 +2997,20 @@ function exitModeratorMode() {
     setTimeout(() => exitBanner.remove(), 500);
   }, 2500);
 }
+/* ---------- PASSWORD VISIBILITY TOGGLE ---------- */
+function togglePasswordVisibility(icon) {
+    const passwordInput = qs('#moderator-password');
+    if (!passwordInput || !icon) return;
+
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        icon.textContent = '🙈'; // Change icon to "hide"
+    } else {
+        passwordInput.type = 'password';
+        icon.textContent = '👁️'; // Change icon back to "show"
+    }
+}
+
 </script>
 </body>
 </html>
