@@ -6,6 +6,11 @@
 <title>VOLUNTARIANS</title>
 <style>
 
+.dashboard-card .card-actions {
+    margin-left: auto; /* This pushes the entire button container to the right */
+    flex-shrink: 0;   /* This prevents the buttons from getting squished */
+}
+
 /* -- Message Log Batch Controls -- */
 .card {
     position: relative; /* This is crucial for positioning the checkbox */
@@ -91,18 +96,27 @@
   color: #ccc;
 }
 
-/* Responsive card layout for mobile */
+/* Responsive card layout for mobile (Corrected) */
 @media (max-width: 480px) {
+  /* 1. Stacks the card content vertically */
   .card-body {
     flex-direction: column;
-    align-items: stretch;
+    align-items: stretch; /* Makes each block (text, buttons) full-width */
     gap: 12px;
+    position: left;
   }
-  .card-actions {
-    justify-content: flex-end; /* Aligns buttons to the right */
-    align-self: flex-end;   /* Ensures it aligns itself correctly in the column */
+
+  /* 2. Explicitly aligns the text block to the left */
+  .dashboard-card .card-body > div:first-child {
+      text-align: left;
+  }
+
+  /* 3. Aligns the button container to the right */
+  .dashboard-card .card-actions {
+    align-self: flex-end;
   }
 }
+
 /* -- End of New Styles -- */
 
 .dashboard-card.approved {
@@ -449,10 +463,6 @@
 /* Cards */
 .analytics-cards { display:flex; gap:12px; flex-wrap:wrap; margin-top:12px; }
 /* Fix for the card actions alignment in normal (non-moderator) view */
-.dashboard-card .card-actions {
-    flex-grow: 1;
-    justify-content: flex-end;
-}
 
 .dashboard-card {
   background: rgba(10,18,22,0.72);
@@ -2006,7 +2016,7 @@ function renderCardsFromSheetArray(arr) {
 
       // -- CORRECTED HTML STRUCTURE AND CHECKBOX PLACEMENT --
       card.innerHTML = `
-        <div class="card-header">
+        <div class="card-header"">
             <div class="meta" style="margin-bottom: 0px">
                 <strong data-timestamp="${item.timestamp}">${fmtDate(item.timestamp)}</strong> · <span class="muted">${escapeHtml(item.main)} › ${escapeHtml(item.sub)}</span>
             </div>
