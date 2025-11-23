@@ -215,6 +215,78 @@ function handleApproveIdea(payload) {
     return jsonResponse({ success: true, message: 'Idea delivered.' });
 }
 
+function handleBatchDelete(payload, sheetName) {
+  try {
+    const timestamps = payload.timestamps ? payload.timestamps.split(',') : [];
+    if (timestamps.length === 0) {
+      return jsonResponse({ success: false, error: 'No timestamps provided for batch deletion.' });
+    }
+
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
+    if (!sheet) throw new Error(`Sheet "${sheetName}" not found.`);
+    
+    const data = sheet.getDataRange().getValues();
+    const headers = data[0];
+    const timestampColIndex = headers.findIndex(h => h.toUpperCase() === 'TIMESTAMP');
+    if (timestampColIndex === -1) throw new Error('Timestamp column not found in sheet: ' + sheetName);
+
+    const rowsToDelete = [];
+    const timestampSet = new Set(timestamps);
+
+    for (let i = 1; i < data.length; i++) {
+      const rowTimestamp = new Date(data[i][timestampColIndex]).toISOString();
+      if (timestampSet.has(rowTimestamp)) {
+        rowsToDelete.push(i + 1);
+      }
+    }
+
+    for (let i = rowsToDelete.length - 1; i >= 0; i--) {
+      sheet.deleteRow(rowsToDelete[i]);
+    }
+
+    return jsonResponse({ success: true, message: `${rowsToDelete.length} items deleted from ${sheetName}.` });
+  } catch (err) {
+    Logger.log(`Batch Delete Error in ${sheetName}: ` + err.toString());
+    return jsonResponse({ success: false, error: err.toString() });
+  }
+}
+
+function handleBatchApproveIdeas(payload) {
+  try {
+    const timestamps = payload.timestamps ? payload.timestamps.split(',') : [];
+    if (timestamps.length === 0) return jsonResponse({ success: false, error: 'No timestamps provided.' });
+
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('SUGG');
+    if (!sheet) throw new Error('Sheet "SUGG" not found.');
+
+    const data = sheet.getDataRange().getValues();
+    const headers = data[0];
+    const timestampColIndex = headers.findIndex(h => h.toUpperCase() === 'TIMESTAMP');
+    const statusColIndex = headers.findIndex(h => h.toUpperCase() === 'STATUS');
+    if (timestampColIndex === -1 || statusColIndex === -1) throw new Error('Required columns (TIMESTAMP or STATUS) not found.');
+    
+    const timestampSet = new Set(timestamps);
+    const rangesToUpdate = [];
+
+    for (let i = 1; i < data.length; i++) {
+      const rowTimestamp = new Date(data[i][timestampColIndex]).toISOString();
+      if (timestampSet.has(rowTimestamp)) {
+        rangesToUpdate.push(sheet.getRange(i + 1, statusColIndex + 1).getA1Notation());
+      }
+    }
+
+    if (rangesToUpdate.length > 0) {
+      sheet.getRangeList(rangesToUpdate).setValue('Delivered');
+    }
+
+    return jsonResponse({ success: true, message: `${rangesToUpdate.length} ideas delivered.` });
+  } catch (err) {
+    Logger.log('Batch Approve Error: ' + err.toString());
+    return jsonResponse({ success: false, error: err.toString() });
+  }
+}
+
+
 // ----------------- DATA READING / WRITING -----------------
 
 function readRawAsObjects(){
