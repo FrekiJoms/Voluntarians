@@ -2662,28 +2662,35 @@ function deleteIdea(event, timestamp) {
 
       try {
         const result = await performModeratorAction('deleteIdea', timestamp);
+        
+        // Check if the action was successful
         if (result && result.success) {
             console.log('Idea deleted successfully.');
             const card = button.closest('.dashboard-card');
             if (card) {
+                // Apply the fade-out animation, same as the message log
                 card.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
                 card.style.opacity = '0';
                 card.style.transform = 'scale(0.95)';
                 setTimeout(() => card.remove(), 300);
             }
         } else {
-            button.innerHTML = originalText;
-            button.disabled = false;
-            button.classList.remove('loading');
+          // If the backend returns an error (like "not found"), restore the button.
+          // The alert popup is already handled by the performModeratorAction function.
+          button.innerHTML = originalText;
+          button.disabled = false;
+          button.classList.remove('loading');
         }
-       } catch (e) {
-            button.innerHTML = originalText;
-            button.disabled = false;
-            button.classList.remove('loading');
-       }
+      } catch (e) {
+        // This handles network errors or other unexpected issues.
+        button.innerHTML = originalText;
+        button.disabled = false;
+        button.classList.remove('loading');
+      }
     }
   );
 }
+
 function exitModeratorMode() {
   isModerator = false;
   moderatorToken = null;
