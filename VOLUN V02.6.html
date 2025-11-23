@@ -5,6 +5,15 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>VOLUNTARIANS</title>
 <style>
+
+/* -- Batch Action Button Grouping -- */
+.batch-buttons-group {
+    display: flex;
+    flex-wrap: wrap; /* Allow buttons inside the group to wrap */
+    justify-content: flex-end; /* Align buttons to the right */
+    gap: 8px; /* Spacing between buttons */
+}
+  
 /* -- Final Responsive Fix for Idea Cards -- */
 @media (max-width: 600px) {
   .dashboard-card .card-body {
@@ -1037,7 +1046,10 @@ body.modal-open { overflow:show; touch-action:none; }
     <label for="message-select-all" class="muted">Select All</label>
   </div>
   <div style="flex-grow:1;"></div>
-  <button id="batch-delete-messages-btn" class="mod-btn delete" onclick="batchDeleteMessages()" disabled>Delete Selected</button>
+  <!-- Add a wrapper div for the button -->
+  <div class="batch-buttons-group">
+    <button id="batch-delete-messages-btn" class="mod-btn delete" onclick="batchDeleteMessages()" disabled>Delete Selected</button>
+  </div>
 </div>
 <!-- END OF BLOCK TO ADD -->
             <div id="cards-container" aria-live="polite"></div>
@@ -1067,14 +1079,17 @@ body.modal-open { overflow:show; touch-action:none; }
               </div>
             </div>
             <div id="idea-batch-controls" class="batch-controls">
-                  <div style="display:flex; align-items:center; gap:8px;">
-                      <input type="checkbox" id="idea-select-all" onclick="toggleSelectAllIdeas(this.checked)" style="transform: scale(1.4);">
-                    <label for="idea-select-all" class="muted">Select All</label>
-                  </div>
-                    <div style="flex-grow:1;"></div>
-                        <button id="batch-approve-btn" class="mod-btn approve" onclick="batchApproveIdeas()" disabled>Approve Selected</button>
-                      <button id="batch-delete-btn" class="mod-btn delete" onclick="batchDeleteIdeas()" disabled>Delete Selected</button>
-                  </div>
+  <div style="display:flex; align-items:center; gap:8px;">
+    <input type="checkbox" id="idea-select-all" onclick="toggleSelectAllIdeas(this.checked)" style="transform: scale(1.4);">
+    <label for="idea-select-all" class="muted">Select All</label>
+  </div>
+  <div style="flex-grow:1;"></div>
+  <!-- Add a wrapper div for the buttons -->
+  <div class="batch-buttons-group">
+    <button id="batch-approve-btn" class="mod-btn approve" onclick="batchApproveIdeas()" disabled>Approve Selected</button>
+    <button id="batch-delete-btn" class="mod-btn delete" onclick="batchDeleteIdeas()" disabled>Delete Selected</button>
+  </div>
+</div>
             <div id="ideas-container" class="analytics-cards" aria-live="polite"></div>
             <div id="ideasLoader" style="display:none;margin-top:10px"><span class="spinner"></span> Loading ideas...</div>
           </div>
