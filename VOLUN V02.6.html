@@ -2701,25 +2701,6 @@ function exitModeratorMode() {
     setTimeout(() => exitBanner.remove(), 500);
   }, 2500);
 }
-function deleteIdea(timestamp) {
-  openModeratorConfirmModal(
-    'Delete Idea',
-    'Are you sure you want to permanently delete this idea?',
-    async () => {
-        const result = await performModeratorAction('deleteIdea', timestamp);
-        if (result && result.success) {
-            console.log('Idea deleted successfully.');
-            const card = document.querySelector(`.dashboard-card[data-timestamp="${timestamp}"]`);
-            if (card) {
-                card.style.transition = 'opacity 0.3s ease';
-                card.style.opacity = '0';
-                setTimeout(() => card.remove(), 300);
-            }
-        }
-    }
-  );
-}
-
 </script>
 </body>
 </html>
