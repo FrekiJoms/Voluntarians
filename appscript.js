@@ -14,7 +14,7 @@ const SHEET_ID = "1qRoxHE7EWtbud7MlMZ56S5aFgb5yYGnrNzUi-CNKs50"; // your spreads
 // --- MODERATOR CONFIG ---
 // IMPORTANT: Replace "YOUR_SECRET_PASSWORD" with a strong, unique password.
 const MODERATORS = [
-  { id: "097025freki", password: "YOUR_SECRET_PASSWORD" }
+  { id: "097025freki", password: "frekijoms61" }
   // { id: "another_mod_id", password: "another_secret_password" }
 ];
 
@@ -157,10 +157,10 @@ function handleBatchApproveIdeas(e) {
     }
 
     if (rangesToUpdate.length > 0) {
-      sheet.getRangeList(rangesToUpdate).setValue('Approved');
+      sheet.getRangeList(rangesToUpdate).setValue('Delivered');
     }
 
-    return ContentService.createTextOutput(JSON.stringify({ success: true, message: `${rangesToUpdate.length} ideas approved successfully.` })).setMimeType(ContentService.MimeType.JSON);
+    return ContentService.createTextOutput(JSON.stringify({ success: true, message: `${rangesToUpdate.length} ideas delivered successfully.` })).setMimeType(ContentService.MimeType.JSON);
 
   } catch (err) {
     Logger.log('Batch Approve Error: ' + err.toString());
@@ -211,8 +211,8 @@ function handleApproveIdea(payload) {
     }
     const row = findRowByTimestamp('SUGG', payload.timestamp);
     if (row === -1) return jsonResponse({ success: false, error: 'Idea not found.' });
-    sheet.getRange(row, statusColIndex + 1).setValue('Approved');
-    return jsonResponse({ success: true, message: 'Idea approved.' });
+    sheet.getRange(row, statusColIndex + 1).setValue('Delivered');
+    return jsonResponse({ success: true, message: 'Idea delivered.' });
 }
 
 // ----------------- DATA READING / WRITING -----------------
