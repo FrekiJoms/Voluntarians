@@ -5,6 +5,33 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>VOLUNTARIANS</title>
 <style>
+  /* -- KPI Stat Cards -- */
+.kpi-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.kpi-card {
+  background: rgba(10,18,22,0.6);
+  border: 1px solid rgba(0,210,255,0.06);
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+  box-shadow: 0 8px 28px rgba(0,210,255,0.01);
+}
+.kpi-value {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--accent1);
+  line-height: 1.2;
+}
+.kpi-label {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
 /* -- Password Visibility Toggle -- */
 .password-wrap {
   position: relative;
@@ -1148,71 +1175,97 @@ body.modal-open { overflow:show; touch-action:none; }
 <!-- Dashboard Page -->
 <section id="dashboardPage" class="section">
   <div class="content-wrap" style="margin-top:8px">
-  <div class="dashboard-panel">
-    <div class="panel-head">
-      <div>
-        <div class="panel-title">📊 Voluntarians' Dashboard</div>
-        <div class="muted panel-sub">View analytics, activity trends, and live charts based on the data gathered.</div>
+
+    <!-- KPI Stat Cards -->
+    <div class="kpi-cards">
+      <div class="kpi-card">
+        <div class="kpi-value" id="kpi-total-concerns">--</div>
+        <div class="kpi-label">Total Concerns Submitted</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value" id="kpi-total-ideas">--</div>
+        <div class="kpi-label">Total Ideas Submitted</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value" id="kpi-ideas-delivered">--</div>
+        <div class="kpi-label">Ideas Delivered</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value" id="kpi-active-category">--</div>
+        <div class="kpi-label">Most Active Category</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value" id="kpi-active-category">--</div>
+        <div class="kpi-label">Most Active Sub-Category</div>
       </div>
     </div>
-    <div class="muted" style="margin-top:8px">Tip: nandito naka lagay kung ano yung mostly requested.</div>
-    <div class="analytics-cards" style="margin-top:12px">
-   
-      <!-- Main Analytics card -->
-      <div class="dashboard-card" data-key="main">
-        <div class="card-body">
-          <div>
-            <div class="card-heading">📊 Main Analytics</div>
-            <div class="card-sub muted">All categories</div>
-          </div>
-          <div class="card-actions">
-            <button class="btn" data-key="main">View</button>
-          </div>
+
+    <!-- Chart Cards Panel -->
+    <div class="dashboard-panel">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title">📊 Chart Analytics</div>
+          <div class="muted panel-sub">Select a category to view detailed charts.</div>
         </div>
       </div>
-
-      <!-- EXE -->
-      <div class="dashboard-card" data-key="exe">
-        <div class="card-body">
-          <div>
-            <div class="card-heading">📊 EXE Analytics</div>
-            <div class="card-sub muted">EXE subcategories</div>
-          </div>
-          <div class="card-actions">
-            <button class="btn" data-key="exe">View</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- TMF -->
-      <div class="dashboard-card" data-key="tmf">
-        <div class="card-body">
-          <div>
-            <div class="card-heading">📊 TMF Analytics</div>
-            <div class="card-sub muted">TMF subcategories</div>
-          </div>
-          <div class="card-actions">
-            <button class="btn" data-key="tmf">View</button>
+      <div class="analytics-cards" style="margin-top:12px">
+     
+        <!-- Main Analytics card -->
+        <div class="dashboard-card" data-key="main">
+          <div class="card-body">
+            <div>
+              <div class="card-heading">📊 Main Analytics</div>
+              <div class="card-sub muted">All categories</div>
+            </div>
+            <div class="card-actions">
+              <button class="btn" data-key="main">View</button>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- Kaizenset -->
-      <div class="dashboard-card" data-key="kaizenset">
-        <div class="card-body">
-          <div>
-            <div class="card-heading">📊 Kaizenset Analytics</div>
-            <div class="card-sub muted">Kaizenset</div>
+        <!-- EXE -->
+        <div class="dashboard-card" data-key="exe">
+          <div class="card-body">
+            <div>
+              <div class="card-heading">📊 EXE Analytics</div>
+              <div class="card-sub muted">EXE subcategories</div>
+            </div>
+            <div class="card-actions">
+              <button class="btn" data-key="exe">View</button>
+            </div>
           </div>
-          <div class="card-actions">
-            <button class="btn" data-key="kaizenset">View</button>
+        </div>
+
+        <!-- TMF -->
+        <div class="dashboard-card" data-key="tmf">
+          <div class="card-body">
+            <div>
+              <div class="card-heading">📊 TMF Analytics</div>
+              <div class="card-sub muted">TMF subcategories</div>
+            </div>
+            <div class="card-actions">
+              <button class="btn" data-key="tmf">View</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Kaizenset -->
+        <div class="dashboard-card" data-key="kaizenset">
+          <div class="card-body">
+            <div>
+              <div class="card-heading">📊 Kaizenset Analytics</div>
+              <div class="card-sub muted">Kaizenset</div>
+            </div>
+            <div class="card-actions">
+              <button class="btn" data-key="kaizenset">View</button>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </div>
-</div>
 </section>
+
 
 
 <!--MODALS AREA-->
