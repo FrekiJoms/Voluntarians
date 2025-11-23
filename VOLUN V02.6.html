@@ -1048,7 +1048,7 @@ body.modal-open { overflow:show; touch-action:none; }
   <div style="flex-grow:1;"></div>
   <!-- Add a wrapper div for the button -->
   <div class="batch-buttons-group">
-    <button id="batch-delete-messages-btn" class="mod-btn delete" onclick="batchDeleteMessages()" disabled>Delete Selected</button>
+<button id="batch-delete-messages-btn" class="mod-btn delete" onclick="batchDeleteMessages(event)" disabled>Delete Selected</button>
   </div>
 </div>
 <!-- END OF BLOCK TO ADD -->
@@ -1086,8 +1086,8 @@ body.modal-open { overflow:show; touch-action:none; }
   <div style="flex-grow:1;"></div>
   <!-- Add a wrapper div for the buttons -->
   <div class="batch-buttons-group">
-    <button id="batch-approve-btn" class="mod-btn approve" onclick="batchApproveIdeas()" disabled>Approve Selected</button>
-    <button id="batch-delete-btn" class="mod-btn delete" onclick="batchDeleteIdeas()" disabled>Delete Selected</button>
+<button id="batch-approve-btn" class="mod-btn approve" onclick="batchApproveIdeas(event)" disabled>Approve Selected</button>
+<button id="batch-delete-btn" class="mod-btn delete" onclick="batchDeleteIdeas(event)" disabled>Delete Selected</button>
   </div>
 </div>
             <div id="ideas-container" class="analytics-cards" aria-live="polite"></div>
@@ -1374,7 +1374,79 @@ body.modal-open { overflow:show; touch-action:none; }
 </div>
 
 <script>
-  /* ---------- MESSAGE LOG BATCH ACTIONS ---------- */
+/* ---------- BATCH ACTIONS LOGIC (FINALIZED) ---------- */
+
+// --- Generic Helper for All Batch Actions ---
+async function performModeratorBatchAction(action, timestamps, button) {
+  if (!isModerator || !moderatorToken) {
+    alert('Your session has expired. Please log in again.');
+    openModeratorLoginModal();
+    return;
+  }
+  if (!button) {
+      console.error("Batch action called without a button element.");
+      return;
+  }
+
+  const originalText = button.innerHTML;
+  button.innerHTML = '<span class="spinner-tiny"></span>';
+  button.disabled = true;
+  button.classList.add('loading');
+
+  try {
+    const res = await fetch(`https://script.google.com/macros/s/${DEPLOYED_ID}/exec`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+        body: new URLSearchParams({
+            action: action,
+            timestamps: timestamps.join(','), // Send as comma-separated string
+            token: moderatorToken
+        }).toString(),
+    });
+
+    if (!res.ok) throw new Error(`Server error: ${res.status}`);
+    const data = await res.json();
+    if (data.success !== true) throw new Error(data.error || `Batch ${action} failed.`);
+
+    // SUCCESS: Remove/update cards from the UI
+    console.log(`Batch action ${action} successful:`, data.message);
+    timestamps.forEach(ts => {
+        const card = qs(`.card[data-timestamp="${ts}"], .dashboard-card[data-timestamp="${ts}"]`);
+        if (card) {
+            if (action.includes('Delete')) {
+                // Animate and remove for delete actions
+                card.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                card.style.opacity = '0';
+                card.style.transform = 'scale(0.95)';
+                setTimeout(() => card.remove(), 300);
+            } else if (action.includes('Approve')) {
+                // Update style for approve actions
+                card.classList.add('approved');
+                const approveBtn = card.querySelector('.mod-btn.approve');
+                if (approveBtn) {
+                    approveBtn.innerHTML = '✓ Approved';
+                    approveBtn.disabled = true;
+                }
+            }
+        }
+    });
+
+  } catch (err) {
+    console.error(`Batch action failed: ${action}`, err);
+    alert(`Batch action failed: ${err.message}`);
+  } finally {
+    button.innerHTML = originalText;
+    button.disabled = false;
+    button.classList.remove('loading');
+    // Uncheck all boxes after action
+    qsa('.card-checkbox:checked').forEach(cb => cb.checked = false);
+    updateIdeaBatchButtons();
+    updateMessageBatchButtons();
+  }
+}
+
+
+// --- Message Log Functions ---
 function updateMessageBatchButtons() {
     const selected = qsa('.message-checkbox:checked');
     const deleteBtn = qs('#batch-delete-messages-btn');
@@ -1383,7 +1455,7 @@ function updateMessageBatchButtons() {
     if (deleteBtn) deleteBtn.disabled = selected.length === 0;
 
     const allVisibleCheckboxes = qsa('.card:not([style*="display: none"]) .message-checkbox');
-    if (selected.length > 0 && selected.length === allVisibleCheckboxes.length) {
+    if (selected.length > 0 && allVisibleCheckboxes.length > 0 && selected.length === allVisibleCheckboxes.length) {
       if(selectAllCheckbox) selectAllCheckbox.checked = true;
     } else {
       if(selectAllCheckbox) selectAllCheckbox.checked = false;
@@ -1397,36 +1469,29 @@ function toggleSelectAllMessages(isChecked) {
     updateMessageBatchButtons();
 }
 
-function batchDeleteMessages() {
+function batchDeleteMessages(event) {
     const timestamps = qsa('.message-checkbox:checked').map(cb => cb.value);
     if (timestamps.length === 0) return;
 
     openModeratorConfirmModal(
         `Delete ${timestamps.length} Messages?`,
         'Are you sure you want to permanently delete all selected messages?',
-        async () => {
-            console.log('BATCH DELETE MESSAGES: ', timestamps);
-            alert('Batch Delete for messages is being implemented. Timestamps logged to console.');
-            // The logic to call the backend will be added in our next step.
-        }
+        () => performModeratorBatchAction('batchDeleteMessages', timestamps, event.target)
     );
 }
 
-/* ---------- BATCH ACTIONS LOGIC (Corrected) ---------- */
+// --- Community Ideas Functions ---
 function updateIdeaBatchButtons() {
     const selected = qsa('.idea-checkbox:checked');
     const approveBtn = qs('#batch-approve-btn');
     const deleteBtn = qs('#batch-delete-btn');
     const selectAllCheckbox = qs('#idea-select-all');
 
-    // Enable or disable the batch action buttons
     if (approveBtn) approveBtn.disabled = selected.length === 0;
     if (deleteBtn) deleteBtn.disabled = selected.length === 0;
     
-    // Logic to correctly check or uncheck the "Select All" checkbox
-    // It should only consider cards that are currently visible
     const allVisibleCheckboxes = qsa('.dashboard-card:not([style*="display: none"]) .idea-checkbox');
-    if (allVisibleCheckboxes.length > 0 && selected.length === allVisibleCheckboxes.length) {
+    if (allVisibleCheckboxes.length > 0 && selected.length > 0 && selected.length === allVisibleCheckboxes.length) {
       if (selectAllCheckbox) selectAllCheckbox.checked = true;
     } else {
       if (selectAllCheckbox) selectAllCheckbox.checked = false;
@@ -1434,43 +1499,35 @@ function updateIdeaBatchButtons() {
 }
 
 function toggleSelectAllIdeas(isChecked) {
-    // Only select/deselect the checkboxes of cards that are currently visible
     qsa('.dashboard-card:not([style*="display: none"]) .idea-checkbox').forEach(cb => {
         cb.checked = isChecked;
     });
-    // Update the state of the buttons
     updateIdeaBatchButtons();
 }
 
-function getSelectedTimestamps() {
+function getSelectedIdeaTimestamps() {
     return qsa('.idea-checkbox:checked').map(cb => cb.value);
 }
 
-function batchApproveIdeas() {
-    const timestamps = getSelectedTimestamps();
+function batchApproveIdeas(event) {
+    const timestamps = getSelectedIdeaTimestamps();
     if (timestamps.length === 0) return;
 
     openModeratorConfirmModal(
         `Approve ${timestamps.length} Ideas?`,
         'Are you sure you want to approve all selected ideas?',
-        async () => {
-            console.log('BATCH APPROVE: ', timestamps);
-            alert('Batch Approve functionality is being implemented. Timestamps are logged to the console.');
-        }
+        () => performModeratorBatchAction('batchApproveIdeas', timestamps, event.target)
     );
 }
 
-function batchDeleteIdeas() {
-    const timestamps = getSelectedTimestamps();
+function batchDeleteIdeas(event) {
+    const timestamps = getSelectedIdeaTimestamps();
     if (timestamps.length === 0) return;
 
     openModeratorConfirmModal(
         `Delete ${timestamps.length} Ideas?`,
         'Are you sure you want to permanently delete all selected ideas?',
-        async () => {
-            console.log('BATCH DELETE: ', timestamps);
-            alert('Batch Delete functionality is being implemented. Timestamps are logged to the console.');
-        }
+        () => performModeratorBatchAction('batchDeleteIdeas', timestamps, event.target)
     );
 }
 
