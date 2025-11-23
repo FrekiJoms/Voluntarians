@@ -916,7 +916,7 @@ body.modal-open { overflow:show; touch-action:none; }
       <div id="homeScreen" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:28px;text-align:center;z-index:2200;background:rgba(0,0,0,0.44);backdrop-filter: blur(14px);">
         <div style="width:120px;height:140px;border-radius:20px;background:linear-gradient(135deg,var(--accent1),var(--accent2));display:flex;align-items:center;justify-content:center;box-shadow:0 12px 40px rgba(0,210,255,0.12)">
             <div class="float-rotate-wrap">
-                <img style="height:130px;width:130px" src="https://i.postimg.cc/F19sM0qH/volunlogo.png" alt="Voluntarians Logo" class="float-rotate-wrap"></div>
+                <img style="height:130px;width:130px" src="https://lh3.googleusercontent.com/sitesv/AAzXCkeAmtIr9U1ZX0jz9OS9AvdxLuILoQuEKhIiToE31oY5JfAXKpDUrPpH6VWc4sciPo2An80dZXQlrysdfAkB27OXhJ9hy9Iv32lDJS_eWmc6e30H-edEzrxA7J2Mm64Vvx00t9mLoVCCfnY6Fj7ys2kZRcZblTBCQUOVpvcsHlbtjrVYX64LUqjlJeo=w1280" alt="Voluntarians Logo" class="float-rotate-wrap"></div>
             </div>
             <h1 style="margin:0;font-size:24px;font-weight:800">VOLUNTARIANS HUB</h1>
         <p style="max-width:520px;margin:0;color:var(--muted)">A hub that connects problems to solutions. The rise of an era of Volunteers, <strong>the Voluntarians.</strong></p>
@@ -928,7 +928,7 @@ body.modal-open { overflow:show; touch-action:none; }
       <div class="header" role="banner">
         <div class="brand" role="img" aria-label="Voluntarians Hub">
           <div class="logo-area">
-            <img src="https://i.postimg.cc/F19sM0qH/volunlogo.png" alt="Logo" style="width:60px;height:60px;border-radius:8px;"></div>
+            <img src="https://lh3.googleusercontent.com/sitesv/AAzXCkeAmtIr9U1ZX0jz9OS9AvdxLuILoQuEKhIiToE31oY5JfAXKpDUrPpH6VWc4sciPo2An80dZXQlrysdfAkB27OXhJ9hy9Iv32lDJS_eWmc6e30H-edEzrxA7J2Mm64Vvx00t9mLoVCCfnY6Fj7ys2kZRcZblTBCQUOVpvcsHlbtjrVYX64LUqjlJeo=w1280" alt="Logo" style="width:60px;height:60px;border-radius:8px;"></div>
           <div>
             <div class="title">THE VOLUNTARIANS' HUB</div>
             <div class="subtitle">Community Platform v0.2.5</div>
@@ -2164,7 +2164,7 @@ function renderIdeaCards(ideas) {
             const author = escapeHtml(idea.AUTHOR || 'Anonymous');
             
             const isApproved = idea.STATUS === 'Approved';
-            const approveButtonText = isApproved ? '✓ Approved' : 'Approve';
+            const approveButtonText = isApproved ? '✓ Delivered' : 'Deliver';
             const approveButtonDisabled = isApproved ? 'disabled' : '';
 
             // UPDATED: onclick attributes now include 'event'
@@ -2631,8 +2631,8 @@ function deleteMessage(event, timestamp) {
 function approveIdea(event, timestamp) {
   const button = event.target;
   openModeratorConfirmModal(
-    'Approve Idea',
-    'Are you sure you want to approve this idea? This will mark it as "Approved" in the sheet.',
+    'Deliver Idea',
+    'Are you sure you want to deliver this idea? This will mark it as "Delivered" in the sheet.',
     async () => {
       const originalText = button.innerHTML;
       button.innerHTML = '<span class="spinner-tiny"></span>';
@@ -2642,10 +2642,10 @@ function approveIdea(event, timestamp) {
       try {
         const result = await performModeratorAction('approveIdea', timestamp);
         if (result && result.success) {
-            console.log('Idea approved successfully.');
+            console.log('Idea delivered successfully.');
             const card = button.closest('.dashboard-card');
             if (card) card.classList.add('approved');
-            button.innerHTML = '✓ Approved';
+            button.innerHTML = '✓ Delivered';
             // Button remains disabled, no need to remove 'loading' or re-enable
         } else {
             button.innerHTML = originalText;
