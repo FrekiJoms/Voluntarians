@@ -1051,6 +1051,15 @@ body.modal-open { overflow:show; touch-action:none; }
                 <button class="btn ghost" onclick="fetchIdeas()">Refresh</button>
               </div>
             </div>
+            <div id="idea-batch-controls" class="batch-controls">
+                  <div style="display:flex; align-items:center; gap:8px;">
+                      <input type="checkbox" id="idea-select-all" onclick="toggleSelectAllIdeas(this.checked)" style="transform: scale(1.4);">
+                    <label for="idea-select-all" class="muted">Select All</label>
+                  </div>
+                    <div style="flex-grow:1;"></div>
+                        <button id="batch-approve-btn" class="mod-btn approve" onclick="batchApproveIdeas()" disabled>Approve Selected</button>
+                      <button id="batch-delete-btn" class="mod-btn delete" onclick="batchDeleteIdeas()" disabled>Delete Selected</button>
+                  </div>
             <div id="ideas-container" class="analytics-cards" aria-live="polite"></div>
             <div id="ideasLoader" style="display:none;margin-top:10px"><span class="spinner"></span> Loading ideas...</div>
           </div>
@@ -1335,6 +1344,67 @@ body.modal-open { overflow:show; touch-action:none; }
 </div>
 
 <script>
+/* ---------- BATCH ACTIONS LOGIC ---------- */
+function updateBatchActionButtons() {
+    const selected = qsa('.idea-checkbox:checked');
+    const approveBtn = qs('#batch-approve-btn');
+    const deleteBtn = qs('#batch-delete-btn');
+    const selectAllCheckbox = qs('#idea-select-all');
+
+    if (approveBtn) approveBtn.disabled = selected.length === 0;
+    if (deleteBtn) deleteBtn.disabled = selected.length === 0;
+    
+    // Uncheck "Select All" if any individual box is unchecked
+    if (selected.length < qsa('.idea-checkbox').length) {
+      if (selectAllCheckbox) selectAllCheckbox.checked = false;
+    } else if (selected.length > 0) {
+      if (selectAllCheckbox) selectAllCheckbox.checked = true;
+    }
+}
+
+function toggleSelectAllIdeas(isChecked) {
+    qsa('.idea-checkbox').forEach(cb => {
+        // Only change checkbox if its card is visible
+        if (cb.closest('.dashboard-card').style.display !== 'none') {
+            cb.checked = isChecked;
+        }
+    });
+    updateBatchActionButtons();
+}
+
+function getSelectedTimestamps() {
+    return qsa('.idea-checkbox:checked').map(cb => cb.value);
+}
+
+function batchApproveIdeas() {
+    const timestamps = getSelectedTimestamps();
+    if (timestamps.length === 0) return;
+
+    openModeratorConfirmModal(
+        `Approve ${timestamps.length} Ideas?`,
+        'Are you sure you want to approve all selected ideas?',
+        async () => {
+            console.log('BATCH APPROVE: ', timestamps);
+            // We will add the backend call here in the next step.
+            alert('Batch Approve functionality is being implemented. Timestamps are logged to the console.');
+        }
+    );
+}
+
+function batchDeleteIdeas() {
+    const timestamps = getSelectedTimestamps();
+    if (timestamps.length === 0) return;
+
+    openModeratorConfirmModal(
+        `Delete ${timestamps.length} Ideas?`,
+        'Are you sure you want to permanently delete all selected ideas?',
+        async () => {
+            console.log('BATCH DELETE: ', timestamps);
+            // We will add the backend call here in the next step.
+            alert('Batch Delete functionality is being implemented. Timestamps are logged to the console.');
+        }
+    );
+}
 
 let ideasHaveBeenFetched = false;
 
@@ -2151,7 +2221,6 @@ async function fetchIdeas() {
     loader.style.display = 'none';
   }
 }
-
 function renderIdeaCards(ideas) {
     const container = qs('#ideas-container');
     const pageSize = 10;
@@ -2185,11 +2254,11 @@ function renderIdeaCards(ideas) {
             const author = escapeHtml(idea.AUTHOR || 'Anonymous');
             
             const isApproved = idea.STATUS === 'Approved';
-            const approveButtonText = isApproved ? '✓ Delivered' : 'Deliver';
+            const approveButtonText = isApproved ? '✓ Approved' : 'Approve';
             const approveButtonDisabled = isApproved ? 'disabled' : '';
 
-            // UPDATED: onclick attributes now include 'event'
             card.innerHTML = `
+                <input type="checkbox" class="card-checkbox idea-checkbox" value="${idea.TIMESTAMP}" onchange="updateBatchActionButtons()">
                 <div class="card-body">
                   <div>
                     <div class="card-heading" data-original-text="${title}">${title}</div>
@@ -2230,9 +2299,6 @@ function renderIdeaCards(ideas) {
     
     renderPage(0);
 }
-
-
-
 function sortIdeaCards() {
   const order = qs('#ideaSortOrder') ? qs('#ideaSortOrder').value : 'newest';
   const container = qs('#ideas-container');
