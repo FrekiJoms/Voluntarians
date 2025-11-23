@@ -5,97 +5,93 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>VOLUNTARIANS</title>
 <style>
-/* -- KPI Stat Cards (Glassmorphism Redesign) -- */
+/* -- KPI Stat Cards (Hover-Reveal Description) -- */
 .kpi-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-  gap: 16px;
-  margin-bottom: 28px;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
 }
 .kpi-card {
   position: relative;
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.01));
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  padding: 16px;
+  border-radius: 12px;
+  padding: 12px;
   cursor: pointer;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(10px);
-  aspect-ratio: 4 / 3;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(8px);
+  min-height: 85px;
+  
+  /* Flexbox for vertical alignment */
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-  overflow: hidden;
+  
+  overflow: hidden; /* Hide overflowing description text */
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 .kpi-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 15px 40px rgba(0, 210, 255, 0.15);
-  border-color: rgba(0, 210, 255, 0.2);
-}
-
-/* Icon in the corner */
-.kpi-card::after {
-  content: attr(data-icon);
-  position: absolute;
-  top: 10px;
-  right: 12px;
-  font-size: 20px;
-  opacity: 0.15;
-  transition: opacity 0.2s ease;
-}
-.kpi-card:hover::after {
-  opacity: 0.5;
+  transform: translateY(-4px);
+  box-shadow: 0 12px 35px rgba(0, 210, 255, 0.1);
 }
 
 .kpi-value {
-  font-size: 32px;
+  font-size: 28px;
   font-weight: 700;
   color: #fff;
-  line-height: 1.1;
-  text-shadow: 0 0 12px rgba(0, 210, 255, 0.4);
+  text-shadow: 0 0 10px rgba(0, 210, 255, 0.3);
+  transition: transform 0.25s cubic-bezier(.2,.9,.3,1);
+  will-change: transform;
+}
+
+/* The description, created from the data-label attribute */
+.kpi-card::after {
+  content: attr(data-label);
+  position: absolute;
+  bottom: 12px;
+  left: 0;
+  right: 0;
+  
+  /* The requested font size */
+  font-size: 10px;
+  
+  font-weight: 600;
+  color: var(--muted);
+  text-align: center;
+  padding: 0 8px; /* Prevent text from touching edges */
+  
+  /* Hide it by default */
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  will-change: opacity, transform;
+  
+  /* Handle long text */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 100%;
 }
 
-/* Tooltip Bubble */
-.kpi-card::before {
-  content: attr(data-label);
-  position: absolute;
-  bottom: calc(100% + 8px);
-  left: 50%;
-  background: var(--accent1);
-  color: #041428;
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 700;
-  white-space: nowrap;
-  z-index: 10;
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-  transition: all 0.2s ease;
-  transform: translateX(-50%) translateY(5px);
+/* --- The Hover/Click Interaction --- */
+.kpi-card:hover .kpi-value,
+.kpi-card.active .kpi-value {
+  /* Move the number up */
+  transform: translateY(-10px);
 }
-.kpi-card:hover::before,
-.kpi-card.active::before {
+.kpi-card:hover::after,
+.kpi-card.active::after {
+  /* Fade the description in */
   opacity: 1;
-  visibility: visible;
-  transform: translateX(-50%) translateY(0);
+  transform: translateY(0);
 }
 
-/* Responsive Adjustments */
-@media (max-width: 900px) {
-  .kpi-value { font-size: 28px; }
-}
+/* Responsive adjustments */
 @media (max-width: 480px) {
- .kpi-value { font-size: 24px; }
- .kpi-card { border-radius: 12px; }
+  .kpi-value { font-size: 24px; }
+  .kpi-card { min-height: 75px; }
 }
-
 
 /* -- Password Visibility Toggle -- */
 .password-wrap {
