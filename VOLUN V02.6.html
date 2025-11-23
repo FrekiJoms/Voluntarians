@@ -5,67 +5,97 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>VOLUNTARIANS</title>
 <style>
-/* -- KPI Stat Cards (Tooltip Version) -- */
+/* -- KPI Stat Cards (Glassmorphism Redesign) -- */
 .kpi-cards {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 12px;
-  margin-bottom: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
 }
 .kpi-card {
-  position: relative; /* Required for tooltip positioning */
-  background: rgba(10,18,22,0.6);
-  border: 1px solid rgba(0,210,255,0.06);
-  border-radius: 12px;
-  padding: 12px;
-  text-align: center;
-  cursor: pointer; /* Indicates it's clickable */
-  box-shadow: 0 8px 28px rgba(0,210,255,0.01);
+  position: relative;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.01));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 16px;
+  cursor: pointer;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(10px);
+  aspect-ratio: 4 / 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  overflow: hidden;
 }
-.kpi-value {
-  font-size: 28px;
-  font-weight: 800;
-  color: var(--accent1);
-  line-height: 1.2;
+.kpi-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 40px rgba(0, 210, 255, 0.15);
+  border-color: rgba(0, 210, 255, 0.2);
 }
 
-/* The Tooltip Bubble */
+/* Icon in the corner */
+.kpi-card::after {
+  content: attr(data-icon);
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  font-size: 20px;
+  opacity: 0.15;
+  transition: opacity 0.2s ease;
+}
+.kpi-card:hover::after {
+  opacity: 0.5;
+}
+
+.kpi-value {
+  font-size: 32px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.1;
+  text-shadow: 0 0 12px rgba(0, 210, 255, 0.4);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* Tooltip Bubble */
 .kpi-card::before {
   content: attr(data-label);
   position: absolute;
-  bottom: calc(100% + 5px);
+  bottom: calc(100% + 8px);
   left: 50%;
-  transform: translateX(-50%);
   background: var(--accent1);
-  color: var(--background);
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 600;
+  color: #041428;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
   white-space: nowrap;
   z-index: 10;
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transition: opacity 0.15s ease, visibility 0.15s ease;
+  transition: all 0.2s ease;
+  transform: translateX(-50%) translateY(5px);
 }
-
-/* Show tooltip on hover (PC) or when .active (mobile) */
 .kpi-card:hover::before,
 .kpi-card.active::before {
   opacity: 1;
   visibility: visible;
+  transform: translateX(-50%) translateY(0);
 }
 
-/* -- Responsive Adjustments -- */
+/* Responsive Adjustments */
 @media (max-width: 900px) {
-  .kpi-cards { grid-template-columns: repeat(3, 1fr); }
+  .kpi-value { font-size: 28px; }
 }
 @media (max-width: 480px) {
- .kpi-cards { grid-template-columns: repeat(2, 1fr); gap: 10px; }
  .kpi-value { font-size: 24px; }
- .kpi-card { padding: 10px; }
+ .kpi-card { border-radius: 12px; }
 }
+
 
 /* -- Password Visibility Toggle -- */
 .password-wrap {
@@ -1213,23 +1243,22 @@ body.modal-open { overflow:show; touch-action:none; }
 
 <!-- KPI Stat Cards -->
 <div class="kpi-cards">
-  <div class="kpi-card" data-label="Total Concerns Submitted">
+  <div class="kpi-card" data-label="Total Concerns Submitted" data-icon="📝">
     <div class="kpi-value" id="kpi-total-concerns">--</div>
   </div>
-  <div class="kpi-card" data-label="Total Ideas Submitted">
+  <div class="kpi-card" data-label="Total Ideas Submitted" data-icon="💡">
     <div class="kpi-value" id="kpi-total-ideas">--</div>
   </div>
-  <div class="kpi-card" data-label="Ideas Delivered">
+  <div class="kpi-card" data-label="Ideas Delivered" data-icon="🚀">
     <div class="kpi-value" id="kpi-ideas-delivered">--</div>
   </div>
-  <div class="kpi-card" data-label="Most Active Category">
+  <div class="kpi-card" data-label="Most Active Category" data-icon="📊">
     <div class="kpi-value" id="kpi-active-category">--</div>
   </div>
-  <div class="kpi-card" data-label="Most Active Sub-Category">
+  <div class="kpi-card" data-label="Most Active Sub-Category" data-icon="📈">
     <div class="kpi-value" id="kpi-active-subcategory">--</div>
   </div>
 </div>
-
     <!-- Chart Cards Panel -->
     <div class="dashboard-panel">
       <div class="panel-head">
