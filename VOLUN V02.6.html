@@ -6,6 +6,40 @@
 <title>VOLUNTARIANS</title>
 <style>
 
+/* -- Batch Action Controls -- */
+.batch-controls {
+  display: none; /* Hidden by default */
+  padding: 10px;
+  margin-top: 12px;
+  background: rgba(0, 210, 255, 0.04);
+  border: 1px solid rgba(0, 210, 255, 0.06);
+  border-radius: 12px;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.moderator-mode .batch-controls {
+  display: flex; /* Visible in moderator mode */
+}
+
+.card-checkbox {
+  display: none;
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  transform: scale(1.4);
+  accent-color: var(--accent1);
+}
+
+.moderator-mode .card-checkbox {
+  display: block; /* Visible in moderator mode */
+}
+
+.moderator-mode .dashboard-card .card-body {
+  padding-left: 20px; /* Add space for the checkbox */
+}
+
 /* -- Final Responsive Fixes -- */
 
 /* 1. Community Ideas Card Actions */
