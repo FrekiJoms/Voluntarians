@@ -388,6 +388,36 @@ function categorize(text) { const t = (text || "").toLowerCase(); for (const gro
  * Main entry point for all POST requests from the web app.
  * It routes actions to the appropriate handler.
  */
+/**
+ * Handles the submission of a new concern from the main form.
+ */
+function handleSubmitConcern(e) {
+  try {
+    const payload = JSON.parse(e.postData.contents);
+    const message = payload.message || '';
+    if (!message.trim()) throw new Error('Message is required.');
+    const { main, sub } = categorize(message);
+    appendToRawRow([new Date(), message, payload.category || '', main, sub]);
+    return jsonResponse({ success: true, category: { main, sub } });
+  } catch (err) {
+    return jsonResponse({ success: false, error: err.toString() });
+  }
+}
+
+/**
+ * Handles the submission of a new idea/suggestion from the suggestion modal.
+ */
+function handleSubmitSuggestion(e) {
+  try {
+    const payload = e.parameter;
+    if (!payload.title || !payload.details) throw new Error('Title and Details are required.');
+    appendSuggestionRow(payload);
+    return jsonResponse({ success: true });
+  } catch (err) {
+    return jsonResponse({ success: false, error: err.toString() });
+  }
+}
+
 function doPost(e) {
   try {
     // Robustly parse the payload from either URL parameters or post body.
