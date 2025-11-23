@@ -5,10 +5,11 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>VOLUNTARIANS</title>
 <style>
-  /* -- KPI Stat Cards -- */
+/* -- KPI Stat Cards (Revised) -- */
 .kpi-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  /* Default: 5 columns for wide screens */
+  grid-template-columns: repeat(5, 1fr);
   gap: 12px;
   margin-bottom: 24px;
 }
@@ -16,20 +17,40 @@
   background: rgba(10,18,22,0.6);
   border: 1px solid rgba(0,210,255,0.06);
   border-radius: 12px;
-  padding: 16px;
+  padding: 12px;
   text-align: center;
   box-shadow: 0 8px 28px rgba(0,210,255,0.01);
 }
 .kpi-value {
-  font-size: 32px;
+  /* Reduced font size */
+  font-size: 28px;
   font-weight: 800;
   color: var(--accent1);
   line-height: 1.2;
 }
-.kpi-label {
-  font-size: 13px;
-  color: var(--muted);
-  margin-top: 4px;
+
+/* -- Responsive Adjustments for KPI Cards -- */
+
+/* Tablet: 3 columns */
+@media (max-width: 900px) {
+  .kpi-cards {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Mobile: 2 columns */
+@media (max-width: 480px) {
+ .kpi-cards {
+   grid-template-columns: repeat(2, 1fr);
+   gap: 10px;
+ }
+ .kpi-value {
+   /* Further reduce font size on small screens */
+   font-size: 24px;
+ }
+ .kpi-card {
+   padding: 10px;
+ }
 }
 
 /* -- Password Visibility Toggle -- */
