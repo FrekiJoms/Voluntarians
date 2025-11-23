@@ -2366,7 +2366,10 @@ function renderIdeaCards(ideas) {
         pageItems.forEach(idea => {
             const card = document.createElement('div');
             card.className = 'dashboard-card';
-            if (idea.STATUS === 'Approved') {
+            
+            // --- FIX ---
+            // Check for "Delivered" to match the backend status.
+            if (idea.STATUS === 'Delivered') {
                 card.classList.add('approved');
             }
             
@@ -2377,11 +2380,13 @@ function renderIdeaCards(ideas) {
             const title = escapeHtml(idea.TITLE || 'No Title');
             const author = escapeHtml(idea.AUTHOR || 'Anonymous');
             
-            const isApproved = idea.STATUS === 'Approved';
+            // --- FIX ---
+            // Check for "Delivered" here as well to set the button state correctly.
+            const isApproved = idea.STATUS === 'Delivered';
             const approveButtonText = isApproved ? '✓ Delivered' : 'Deliver';
             const approveButtonDisabled = isApproved ? 'disabled' : '';
 
-            // -- CORRECTED HTML STRUCTURE AND CHECKBOX PLACEMENT --
+            // The HTML structure remains correct.
             card.innerHTML = `
                 <div class="card-body">
                   <div>
@@ -2398,7 +2403,6 @@ function renderIdeaCards(ideas) {
                   </div>
                 </div>
             `;
-            // -- END OF CORRECTION --
             
             container.appendChild(card);
         });
@@ -2426,6 +2430,7 @@ function renderIdeaCards(ideas) {
     
     renderPage(0);
 }
+
 
 function sortIdeaCards() {
   const order = qs('#ideaSortOrder') ? qs('#ideaSortOrder').value : 'newest';
