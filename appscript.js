@@ -250,50 +250,67 @@ function categorize(text) { const t = (text || "").toLowerCase(); for (const gro
 
 // ----------------- MAIN WEBHOOKS (doPost, doGet) -----------------
 
-function doPost(e){
-  try{
-    let payload = {};
-    if(e.parameter && Object.keys(e.parameter).length > 0){ payload = e.parameter; }
-    else if(e.postData && e.postData.contents){ payload = JSON.parse(e.postData.contents); }
+function doPost(e) {
+  try {
+    let payload;
+    // The frontend sends data in multiple formats, so we handle both.
+    try {
+        if (e.postData.type === 'application/json') {
+            payload = JSON.parse(e.postData.contents);
+        } else {
+            payload = e.parameter;
+        }
+    } catch (parseError) {
+        // Fallback for plain text JSON string
+        payload = JSON.parse(e.postData.contents);
+    }
     
-    const action = (payload.action || '').toString();
+    const action = payload.action;
 
-    // --- Action Router ---
-    switch(action) {
-      case 'moderatorLogin':
-        return handleModeratorLogin(payload);
-      
-      case 'deleteMessage':
-      case 'deleteIdea':
-      case 'approveIdea':
-        const mod = verifyModeratorToken(payload.token);
-        if (!mod.verified) return jsonResponse({ success: false, error: 'Invalid or expired session.' });
-        if (action === 'deleteMessage') return handleDeleteMessage(payload);
-        if (action === 'deleteIdea') return handleDeleteIdea(payload);
-        if (action === 'approveIdea') return handleApproveIdea(payload);
-        break;
-
-      case 'submitSuggestion':
-        if (!payload.title || !payload.details) return jsonResponse({ success: false, error: "Missing suggestion fields." });
-        appendSuggestionRow(payload);
-        return jsonResponse({ success: true, result: 'suggestion recorded' });
-
-      case 'submitConcern':
-      case '': // Default action
-        const message = (payload.message || "").toString().trim();
-        if(!message) return jsonResponse({ success:false, error: "No message provided" });
-        const category = categorize(message);
-        appendToRawRow([ new Date(), message, category.main, category.sub, '', (payload.source||'WEB'), (payload.extra||'') ]);
-        return jsonResponse({ success:true, category: category });
-      
-      default:
-        return jsonResponse({ success: false, error: 'Unknown action: ' + action });
+    // --- Public Actions (No Token Required) ---
+    if (action === 'submitConcern') {
+      return handleSubmitConcern(e); // Assumes you have this function
+    }
+    if (action === 'submitSuggestion') {
+      return handleSubmitSuggestion(e); // Assumes you have this function
+    }
+    if (action === 'moderatorLogin') {
+      return handleModeratorLogin(e); // Assumes you have this function
     }
 
-  } catch(err){
-    return jsonResponse({ success:false, error: err.toString() });
+    // --- Moderator-Only Actions (Token Required) ---
+    const token = payload.token;
+    if (!verifyModeratorToken(token)) {
+      return ContentService.createTextOutput(JSON.stringify({ success: false, error: 'Invalid or expired session token.' })).setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    // Actions below this point are protected
+    switch (action) {
+      case 'deleteMessage':
+        return handleDeleteMessage(e); // Assumes you have this function
+      case 'approveIdea':
+        return handleApproveIdea(e); // Assumes you have this function
+      case 'deleteIdea':
+        return handleDeleteIdea(e); // Assumes you have this function
+      
+      // --- NEW BATCH ACTIONS ---
+      case 'batchDeleteMessages':
+        return handleBatchDelete(e, 'Submissions');
+      case 'batchDeleteIdeas':
+        return handleBatchDelete(e, 'Ideas');
+      case 'batchApproveIdeas':
+        return handleBatchApproveIdeas(e);
+
+      default:
+        throw new Error('Invalid or unknown moderator action specified.');
+    }
+
+  } catch (err) {
+    Logger.log('doPost Error: ' + err.toString() + ' Stack: ' + err.stack);
+    return ContentService.createTextOutput(JSON.stringify({ success: false, error: 'An error occurred in doPost: ' + err.toString() })).setMimeType(ContentService.MimeType.JSON);
   }
 }
+
 
 function doGet(e){
   try{
