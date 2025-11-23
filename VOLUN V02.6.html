@@ -5,6 +5,19 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>VOLUNTARIANS</title>
 <style>
+/* -- Final Responsive Fix for Idea Cards -- */
+@media (max-width: 600px) {
+  .dashboard-card .card-body {
+    flex-direction: column;   /* 1. Stack the text and button sections vertically */
+    align-items: flex-start;  /* 2. Align everything to the left, fixing the old centering bug */
+    gap: 12px;                /* 3. Add a nice gap between the stacked text and buttons */
+  }
+
+  .dashboard-card .card-actions {
+    width: 100%;              /* 4. Make the button container span the full width */
+    justify-content: flex-end;/* 5. Push all the buttons inside it to the right-hand side */
+  }
+}
 
 .dashboard-card .card-actions {
     margin-left: auto; /* This pushes the entire button container to the right */
@@ -95,29 +108,6 @@
   background-color: #555;
   color: #ccc;
 }
-
-/* Responsive card layout for mobile (Corrected) */
-@media (max-width: 480px) {
-  /* 1. Stacks the card content vertically */
-  .card-body {
-    flex-direction: column;
-    align-items: stretch; /* Makes each block (text, buttons) full-width */
-    gap: 12px;
-    position: left;
-  }
-
-  /* 2. Explicitly aligns the text block to the left */
-  .dashboard-card .card-body > div:first-child {
-      text-align: left;
-  }
-
-  /* 3. Aligns the button container to the right */
-  .dashboard-card .card-actions {
-    align-self: flex-end;
-  }
-}
-
-/* -- End of New Styles -- */
 
 .dashboard-card.approved {
   opacity: 0.6;
