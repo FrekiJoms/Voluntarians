@@ -70,6 +70,103 @@ function findRowByTimestamp(sheetName, timestamp) {
 }
 
 // ----------------- MODERATOR ACTIONS -----------------
+/**
+ * Deletes multiple rows from a specified sheet based on a list of timestamps.
+ * @param {Object} e The event parameter from doPost.
+ * @param {string} sheetName The name of the sheet to modify ('Submissions' or 'Ideas').
+ * @returns {ContentService.TextOutput} JSON response.
+ */
+function handleBatchDelete(e, sheetName) {
+  try {
+    const payload = JSON.parse(e.postData.contents);
+    // Re-verify token for this specific action
+    if (!verifyModeratorToken(payload.token)) {
+      return ContentService.createTextOutput(JSON.stringify({ success: false, error: 'Invalid or expired session token.' })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    const timestamps = payload.timestamps ? payload.timestamps.split(',') : [];
+    if (timestamps.length === 0) {
+      return ContentService.createTextOutput(JSON.stringify({ success: false, error: 'No timestamps provided for batch deletion.' })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
+    if (!sheet) throw new Error(`Sheet "${sheetName}" not found.`);
+    
+    const data = sheet.getDataRange().getValues();
+    const headers = data[0];
+    const timestampColIndex = headers.findIndex(h => h.toUpperCase() === 'TIMESTAMP');
+    if (timestampColIndex === -1) throw new Error('Timestamp column not found in sheet: ' + sheetName);
+
+    const rowsToDelete = [];
+    // Use a Set for efficient timestamp lookup
+    const timestampSet = new Set(timestamps);
+
+    for (let i = 1; i < data.length; i++) {
+      const rowTimestamp = new Date(data[i][timestampColIndex]).toISOString();
+      if (timestampSet.has(rowTimestamp)) {
+        rowsToDelete.push(i + 1); // +1 because sheet rows are 1-indexed
+      }
+    }
+
+    // Delete rows from the bottom up to avoid index shifting issues
+    for (let i = rowsToDelete.length - 1; i >= 0; i--) {
+      sheet.deleteRow(rowsToDelete[i]);
+    }
+
+    return ContentService.createTextOutput(JSON.stringify({ success: true, message: `${rowsToDelete.length} items deleted from ${sheetName}.` })).setMimeType(ContentService.MimeType.JSON);
+
+  } catch (err) {
+    Logger.log(`Batch Delete Error in ${sheetName}: ` + err.toString());
+    return ContentService.createTextOutput(JSON.stringify({ success: false, error: err.toString() })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+/**
+ * Approves multiple ideas in the "Ideas" sheet based on a list of timestamps.
+ * @param {Object} e The event parameter from doPost.
+ * @returns {ContentService.TextOutput} JSON response.
+ */
+function handleBatchApproveIdeas(e) {
+  try {
+    const payload = JSON.parse(e.postData.contents);
+    if (!verifyModeratorToken(payload.token)) {
+      return ContentService.createTextOutput(JSON.stringify({ success: false, error: 'Invalid or expired session token.' })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    const timestamps = payload.timestamps ? payload.timestamps.split(',') : [];
+    if (timestamps.length === 0) return ContentService.createTextOutput(JSON.stringify({ success: false, error: 'No timestamps provided for batch approval.' })).setMimeType(ContentService.MimeType.JSON);
+
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Ideas');
+    if (!sheet) throw new Error('Sheet "Ideas" not found.');
+
+    const data = sheet.getDataRange().getValues();
+    const headers = data[0];
+    const timestampColIndex = headers.findIndex(h => h.toUpperCase() === 'TIMESTAMP');
+    const statusColIndex = headers.findIndex(h => h.toUpperCase() === 'STATUS');
+    if (timestampColIndex === -1 || statusColIndex === -1) throw new Error('Required columns (TIMESTAMP or STATUS) not found in Ideas sheet.');
+    
+    const timestampSet = new Set(timestamps);
+    const rangesToUpdate = [];
+
+    for (let i = 1; i < data.length; i++) {
+      const rowTimestamp = new Date(data[i][timestampColIndex]).toISOString();
+      if (timestampSet.has(rowTimestamp)) {
+        const cellA1 = sheet.getRange(i + 1, statusColIndex + 1).getA1Notation();
+        rangesToUpdate.push(cellA1);
+      }
+    }
+
+    if (rangesToUpdate.length > 0) {
+      sheet.getRangeList(rangesToUpdate).setValue('Approved');
+    }
+
+    return ContentService.createTextOutput(JSON.stringify({ success: true, message: `${rangesToUpdate.length} ideas approved successfully.` })).setMimeType(ContentService.MimeType.JSON);
+
+  } catch (err) {
+    Logger.log('Batch Approve Error: ' + err.toString());
+    return ContentService.createTextOutput(JSON.stringify({ success: false, error: err.toString() })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
 
 function verifyModeratorToken(token) {
     if (!token) return { verified: false };
