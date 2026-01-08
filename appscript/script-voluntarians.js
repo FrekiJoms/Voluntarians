@@ -14,7 +14,8 @@ const SHEET_ID = "1qRoxHE7EWtbud7MlMZ56S5aFgb5yYGnrNzUi-CNKs50"; // your spreads
 // --- MODERATOR CONFIG ---
 // IMPORTANT: Replace "YOUR_SECRET_PASSWORD" with a strong, unique password.
 const MODERATORS = [
-  { id: "097025freki", password: "frekijoms61" }
+  { id: "097025freki", password: "frekijoms61" },
+  { id: "The.Golden.Age_Of_ICT", password: "K41S3R" }
   // { id: "another_mod_id", password: "another_secret_password" }
 ];
 
